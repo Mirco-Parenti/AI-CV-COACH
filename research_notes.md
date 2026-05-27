@@ -210,3 +210,69 @@ mancanti, quindi vanno verificati.
 - Dipende da un'API a pagamento (OpenAI).
 - Risultati potenzialmente incoerenti, da verificare.
 - Si ferma all'estrazione: non costruisce il profilo in dialogo con l'utente.
+
+---
+
+## Progetto analizzato 4
+
+### Nome progetto
+ResumeLM (olyaiy/resume-lm)
+
+### Link
+https://github.com/olyaiy/resume-lm
+
+### Problema risolto
+Costruire e adattare CV per candidature specifiche, con l'aiuto dell'AI,
+partendo da un profilo dell'utente salvato.
+
+### Funzionalita principali
+- Profilo utente persistente (esperienze, formazione, competenze).
+- Creazione di piu CV a partire dallo stesso profilo.
+- Adattamento del CV a una specifica descrizione di lavoro.
+
+### Tecnologie usate
+- Next.js, React, TypeScript (app web moderna).
+- Tailwind CSS e Shadcn UI per l'interfaccia.
+- Database (Supabase/PostgreSQL) con tabelle separate.
+
+### Flusso utente / gestione dei dati
+- I dati sono organizzati in tabelle separate: profilo (dati reali e
+  permanenti dell'utente), CV generati, descrizioni di lavoro.
+- Netta separazione tra "profilo" (verita stabile) e "CV generati"
+  (output adattati ai singoli annunci): un profilo, molti CV.
+
+### Uso dell'AI e raccolta dati (punto di interesse)
+Dall'analisi di questo e progetti collegati emerge un pattern chiave per
+gestire l'AI che modifica i dati dell'utente:
+- L'AI restituisce output strutturato (istruzioni di modifica precise).
+- Le modifiche proposte vengono mostrate all'utente, che le accetta o
+  rifiuta prima che siano salvate (human-in-the-loop).
+- Consiglio ricorrente: tenere l'AI come strumento discreto e di supporto
+  ("AI-enabled"), non come padrone del processo ("AI-first").
+
+### Principio per AI-CV-COACH: l'AI propone, l'utente conferma
+Nel dialogo guidato, dopo ogni risposta dell'utente:
+1. L'AI mostra come ha strutturato quella risposta (output parziale).
+2. L'utente puo confermare, correggere il singolo campo, o ripetere.
+3. Solo dopo la conferma il dato entra nel profilo.
+Questo limita il rischio di invenzione nel momento piu delicato (la
+raccolta dati in conversazione), perche l'utente e l'unica fonte di verita
+sulle proprie esperienze. L'AI deve strutturare solo cio che l'utente ha
+detto, senza arricchire o gonfiare.
+
+### Idee utili per AI-CV-COACH
+- Separare nettamente profilo (permanente) e CV generati (output).
+- Applicare il pattern "proponi e fai confermare" nel dialogo.
+- Permettere la correzione del singolo campo, non solo ripetere la domanda.
+
+### Limiti osservati
+- Parte comunque da inserimento/modifica di un profilo, non da un vero
+  dialogo guidato a domande successive per costruirlo da zero.
+- Tecnicamente complesso (database, autenticazione): oltre il nostro
+  punto di partenza.
+
+### Nota di posizionamento (importante per la relazione)
+Dall'analisi dei quattro progetti emerge che quasi tutti partono da un CV o
+profilo gia esistente. Pochi o nessuno costruiscono il profilo tramite un
+dialogo guidato a domande successive. Questo e un elemento distintivo e
+originale di AI-CV-COACH.
