@@ -93,3 +93,60 @@ dati, compiti ristretti e fasi separate.
 - Tecnicamente molto più complesso del nostro progetto (Docker, modelli locali).
 - Non prevede un dialogo guidato per costruire il profilo da zero,
   che è invece una caratteristica distintiva di AI-CV-COACH.
+
+---
+
+## Progetto analizzato 2
+
+### Nome progetto
+resume-job-matcher (sliday/resume-job-matcher)
+
+### Link
+https://github.com/sliday/resume-job-matcher
+
+### Problema risolto
+Automatizza il confronto tra uno o piu CV e un annuncio di lavoro,
+assegnando un punteggio di match e generando risposte email ai candidati.
+Pensato piu per chi seleziona (recruiter) che per il candidato.
+
+### Funzionalita principali
+- Calcolo di un punteggio di match tra CV e annuncio.
+- Generazione di PDF dei CV.
+- Generazione di risposte email personalizzate.
+
+### Tecnologie usate
+- Script Python.
+- API di un LLM (Anthropic Claude o OpenAI GPT) per l'analisi.
+
+### Flusso utente
+1. Si forniscono i CV e la descrizione del lavoro.
+2. Lo script usa l'LLM per analizzare e confrontare.
+3. Restituisce un punteggio e contenuti generati (email, PDF).
+
+### Uso dell'AI
+L'AI legge CV e annuncio e assegna direttamente un punteggio di match,
+oltre a generare testi (email).
+
+### Come funziona lo scoring (punto di interesse)
+Il punteggio finale combina due componenti con una media pesata:
+- Match Score generato dall'AI (peso 75%): quanto il CV corrisponde
+  all'annuncio per competenze, esperienza, formazione.
+- Quality Score (peso 25%): qualita visiva e chiarezza del CV.
+Formula: (AI_Score * 0.75 + Quality_Score * 0.25), normalizzata 0-100.
+Appartiene quindi alla "famiglia A": e l'LLM a dare il voto.
+
+### Gestione del rischio di informazioni inventate
+Meno esplicita rispetto a Resume-Matcher. Lo scoring affidato all'LLM
+e potente ma meno trasparente e potenzialmente incoerente: lo stesso input
+puo dare punteggi leggermente diversi. Va trattato come orientativo.
+
+### Idee utili per AI-CV-COACH
+- Idea della media pesata tra piu componenti per costruire un punteggio.
+- Conferma che affidare il voto all'LLM e semplice da implementare.
+- Spunto: chiedere all'AI di motivare il punteggio elencando requisiti
+  soddisfatti e non soddisfatti, per ancorarlo a fatti verificabili.
+
+### Limiti osservati
+- Orientato al recruiter, non al candidato che costruisce il proprio CV.
+- Scoring poco trasparente e potenzialmente incoerente.
+- Nessun dialogo guidato per costruire il profilo.
