@@ -150,3 +150,63 @@ puo dare punteggi leggermente diversi. Va trattato come orientativo.
 - Orientato al recruiter, non al candidato che costruisce il proprio CV.
 - Scoring poco trasparente e potenzialmente incoerente.
 - Nessun dialogo guidato per costruire il profilo.
+
+---
+
+## Progetto analizzato 3
+
+### Nome progetto
+Resume-Parser (Sajjad-Amjad/Resume-Parser)
+
+### Link
+https://github.com/Sajjad-Amjad/Resume-Parser
+
+### Problema risolto
+Trasforma un CV in testo libero (PDF o Word) in dati strutturati e ordinati,
+pronti per essere usati e confrontati da un programma.
+
+### Funzionalita principali
+- Estrazione strutturata delle informazioni del CV.
+- Output in formato dati a campi precisi (tipo JSON).
+- Interfaccia a riga di comando e app web (Streamlit).
+
+### Tecnologie usate
+- Python.
+- API di OpenAI (LLM) per l'estrazione.
+- Streamlit per l'interfaccia web.
+- Pydantic per definire e validare la struttura dei dati.
+
+### Flusso utente
+1. L'utente carica un CV (PDF o Word).
+2. L'AI legge il testo ed estrae le informazioni.
+3. Il sistema restituisce i dati in una struttura predefinita a campi
+   (nome, contatti, esperienze, competenze, formazione, ecc.).
+
+### Uso dell'AI
+L'AI viene usata per leggere testo libero e riempire una struttura di dati
+predefinita. Ogni esperienza e scomposta in campi precisi (azienda, ruolo,
+date, descrizione).
+
+### Concetto chiave: output strutturato
+Invece di far rispondere l'AI in testo libero, le si impone di rispondere in
+un formato rigido a campi (JSON). Questo serve a due scopi:
+1. Difesa anti-invenzione: e un compito chiuso (riempi questi campi con cio
+   che trovi) invece di un compito aperto (racconta questa persona).
+2. Confrontabilita: dati strutturati possono essere confrontati da un
+   programma con i requisiti dell'annuncio, rendendo possibile lo scoring.
+
+### Gestione del rischio di informazioni inventate
+La struttura rigida limita lo spazio di invenzione dell'AI. Resta il limite
+noto degli LLM: i risultati possono essere incoerenti o con informazioni
+mancanti, quindi vanno verificati.
+
+### Idee utili per AI-CV-COACH
+- Adottare output strutturato (JSON) come formato di scambio interno.
+- Strutturare il profilo utente in campi precisi fin dall'inizio.
+- L'estrazione strutturata e il primo anello della pipeline:
+  struttura -> confronta -> assegna punteggio.
+
+### Limiti osservati
+- Dipende da un'API a pagamento (OpenAI).
+- Risultati potenzialmente incoerenti, da verificare.
+- Si ferma all'estrazione: non costruisce il profilo in dialogo con l'utente.
