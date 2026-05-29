@@ -241,3 +241,69 @@ Dialogo guidato in versione MVP (minimo funzionante): poche domande, anche
 senza tutto il meccanismo di conferma e senza ancora la lista delle domande
 in sospeso. L'obiettivo del primo giro e ottenere un profilo grezzo con cui
 far girare il resto della pipeline. Il raffinamento viene dopo.
+
+---
+
+## Fase 1 – Step 1.1 – Struttura del profilo utente
+
+### Cosa ho fatto
+Definita la struttura del profilo utente per l'MVP: il "modulo" che il
+dialogo guidato dovra riempire. La struttura e volutamente minimale per
+restare in scala MVP.
+
+Campi (nomi tecnici JSON):
+- nome
+- esperienze_formali (lista; ogni voce: ruolo, azienda, durata,
+  cosa_facevo)
+- esperienze_informali (lista; ogni voce: cosa_facevo, quando, con_chi,
+  tutti opzionali)
+- competenze (lista di stringhe)
+- formazione (lista; ogni voce: titolo, istituto, anno)
+
+### Cosa ho imparato
+- Distinzione fondamentale tra "nome tecnico" del campo (breve, in
+  inglese o italiano pulito, senza spazi, lo vede solo il programma)
+  e "testo visibile" all'utente (naturale, descrittivo, lungo a piacere).
+  Sono due decisioni separate per la stessa cosa.
+- Il concetto di "schema dati": prima di costruire un form o un dialogo,
+  si decide quali caselle esistono. Poi si formulano le domande per
+  riempirle. L'ordine inverso porta a chiedere cose a caso.
+
+### 💡 Mia intuizione / scelta ragionata: le esperienze informali
+Ho proposto di aggiungere un campo dedicato per esperienze non formali
+(lavoretti, aiuti in famiglia, volontariato, esperienze brevi senza titoli
+o certificati). Motivazioni:
+- Il pubblico realistico di AI-CV-COACH include molte persone con
+  percorsi non lineari, per cui un profilo con solo "esperienze formali"
+  esclude buona parte della loro vita lavorativa reale.
+- E un'ulteriore difesa anti-invenzione strutturale: senza un posto
+  adatto per le esperienze vaghe, l'AI sarebbe tentata di "promuoverle"
+  a esperienze formali per farle entrare nei campi disponibili, creando
+  invenzioni (es. "aiutavo mio zio idraulico" -> "Idraulico, 3 mesi").
+  Avere il campo dedicato evita questa pressione.
+
+Sfumature decise:
+- Nome tecnico scelto: esperienze_informali (parallelo a esperienze_formali).
+- Struttura interna: leggera, tutti i sotto-campi opzionali, perche e la
+  natura del campo. L'utente compila solo quello che ricorda.
+- Per la generazione CV in fase successiva: queste esperienze andranno
+  trattate con cautela, senza "promuoverle" automaticamente a esperienze
+  formali. La formulazione precisa del prompt verra decisa quando saremo
+  nel contesto della generazione CV.
+
+### Dove ho faticato / cosa non era ovvio
+Ho inizialmente proposto come nome del campo una frase descrittiva
+("competenze acquisite anche tramite esperienze pratiche non formali").
+Ragionando, ho capito che era un "testo visibile all'utente", non un
+"nome tecnico" da JSON. Distinzione utile per il futuro.
+
+### Cosa ho deciso e perche
+- Partire da 5 campi essenziali, non di piu: in MVP, meno e meglio.
+  Aggiungeremo (contatti, lingue, ecc.) solo dopo aver visto la pipeline
+  girare.
+- Tenere le esperienze informali separate da quelle formali: non sono
+  esperienze "di serie B", sono di natura diversa e vanno gestite con
+  regole diverse.
+- Rimandare la formulazione precisa dei testi visibili al momento in cui
+  servono davvero (prompt di generazione CV), invece di tararli a vuoto
+  adesso.
