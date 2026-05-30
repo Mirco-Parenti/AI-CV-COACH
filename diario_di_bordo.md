@@ -307,3 +307,32 @@ Ragionando, ho capito che era un "testo visibile all'utente", non un
 - Rimandare la formulazione precisa dei testi visibili al momento in cui
   servono davvero (prompt di generazione CV), invece di tararli a vuoto
   adesso.
+
+  ### Step 1.2 — Struttura del dialogo guidato (MVP)
+
+*Definito lo scheletro del dialogo, non ancora i testi delle domande.*
+
+**Cosa ho fatto**
+Ho definito la struttura del dialogo guidato dell'MVP con quattro decisioni:
+1. Forma: ordine fisso + un argomento per turno + loop di conferma.
+2. Ordine: i cinque campi nella sequenza dello schema (nome → esperienze formali → esperienze informali → competenze → formazione); le competenze restano un turno dedicato (Strada A), non derivate.
+3. Tipi di turno: due soli — *singolo* (per `nome`) e *ripetibile* (per gli altri quattro campi-lista), con domanda-ponte "altro o procediamo?" a fine di ogni voce.
+4. Risposta storta (confusa, vuota o saltata): comportamento unico — l'AI non insiste, dichiara in modo neutro che lascia vuoto, e procede.
+
+Non ho ancora scritto il testo preciso delle domande: lo farò nel contesto giusto (principio "frasi visibili nel contesto").
+
+**Cosa ho imparato**
+Che "la forma più semplice" e "la forma più vicina all'MVP" sono la stessa cosa: meno parti mobili significa insieme meno codice e più fedeltà al concetto di MVP. E che qui il lavoro anti-invenzione spesso non lo fa il codice ma la formulazione della domanda (vedi competenze).
+
+**Dove ho faticato / cosa non era ovvio**
+Non avevo notato che "una domanda per turno" non bastava come categoria. Tre campi su cinque sono liste (posso avere più esperienze, più competenze, più titoli), quindi quel turno deve poter raccogliere più voci. Da qui la distinzione tra turno singolo e turno ripetibile, che all'inizio non avevo in mente.
+
+**Cosa ho deciso e perché**
+- Ordine fisso invece che adattivo: meno logica da costruire e, soprattutto, l'adattivo tende a guidare l'utente verso le risposte — contrario al vincolo anti-invenzione.
+- Strada A per le competenze (turno dedicato ancorato via testo) invece di derivarle: tiene il campo riempito da risposta diretta dell'utente, senza logica nuova nell'MVP.
+- Due tipi di turno: imposti dai campi-lista, servono la domanda-ponte "altro o procediamo?".
+- Comportamento unico sui vuoti: è il "default sicuro" applicato al dialogo (vuoto è meglio di inventato) e lascia la porta aperta a pending_questions.
+
+💡 *Mia intuizione / scelta ragionata* — Strada A con ancoraggio via testo: il lavoro anti-invenzione sulle competenze lo sposto sulla formulazione della domanda, non su una regola nel codice. Il punto più delicato (chiedere "che competenze hai?" a freddo invita al gonfiamento) si disinnesca scegliendo bene le parole, non aggiungendo logica.
+
+💡 *Mia intuizione / scelta ragionata* — I "vuoti" dell'MVP non sono sprechi. Quando aggiungerò pending_questions, saranno proprio le voci da riprendere nel secondo giro. L'MVP fa la versione povera della stessa idea; il raffinamento la versione ricca. Niente da buttare.
