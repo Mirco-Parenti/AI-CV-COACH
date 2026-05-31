@@ -362,3 +362,7 @@ Mi è venuto il dubbio se l'AI riuscisse a distinguere più esperienze raccontat
 💡 *Mia intuizione / scelta ragionata* — L'insidia anti-invenzione è opposta nei due turni-esperienza: gonfiamento nelle formali, "suggerire troppo" nelle informali. Per questo negli esempi delle informali uso categorie larghe (aiutare un familiare, dare una mano in associazioni) invece di attività specifiche: invitare senza imboccare.
 
 💡 *Mia intuizione / scelta ragionata* — Far raccontare una esperienza alla volta non è un limite tecnico dell'AI (saprebbe separarle), ma una scelta di togliere margine di interpretazione, e quindi di invenzione. Stessa logica della cernita studi/lavori: orientare l'utente serve a tenere l'LLM sui fatti.
+
+### Step 1.4 — Turni competenze e formazione (MVP)
+
+Competenze e formazione meritano un passo dedicato, separato dagli altri turni del dialogo. La ragione è il vincolo anti-invenzione: il turno delle competenze è il punto più esposto al rischio di gonfiamento dell'intero dialogo. Chiedere "che competenze hai?" a freddo invita l'utente a vendersi e l'AI a incassare abilità generiche mai dimostrate. Per questo ho scelto di non trattarlo in fretta in coda agli altri turni, ma di dedicargli (insieme a formazione, l'ultimo turno rimasto) uno step a sé, da progettare con cura particolare.
