@@ -165,6 +165,83 @@ Ho capito bene? Se c'è qualcosa da sistemare dimmelo, altrimenti andiamo avanti
 
 **Reminder-ponte + riapertura:** come nel turno formali, adattato.
 
+#### Turno `competenze` (ripetibile, raccolta in blocco)
+
+**Apertura + patto (ancoraggio leggero):**
+
+Passiamo alle competenze, cioè le cose che sai fare.
+Pensa a quello che mi hai raccontato finora — i lavori, le esperienze, le cose di cui ti sei occupato. Da tutto questo, cosa ti senti di saper fare? Anche cose pratiche e concrete, non per forza titoli o certificati.
+
+* Cosa ti riesce bene?
+
+**Conferma (scheda a lista nuda) + anti-dimenticanza, esempio:**
+
+Ecco cosa ho capito — le cose che sai fare:
+– Uso della cassa
+– Rapporto con i clienti
+– Essere ordinato
+
+* Vuoi aggiungerne o eliminarne qualcuna, o confermiamo queste e passiamo all'ultimo campo, la formazione?
+
+**Se l'utente aggiunge (un solo giro, poi si chiude), esempio:**
+
+Perfetto, aggiungo "Lavoro in squadra". Allora le tue competenze sono queste:
+– Uso della cassa
+– Rapporto con i clienti
+– Essere ordinato
+– Lavoro in squadra
+
+* Le confermiamo e andiamo avanti?
+
+**Note specifiche del turno competenze (logica di prompt):**
+
+- **Ancoraggio leggero**: la domanda riporta l'utente alle esperienze già raccontate, ma è l'utente a dichiarare le competenze. L'AI non propone competenze a partire dalle esperienze (sarebbe invenzione). L'ancoraggio forte resta possibile evoluzione futura, non MVP.
+- **Raccolta in blocco**, non una alla volta: a differenza dei turni-esperienza (oggetti ricchi, una voce per turno), le competenze sono stringhe semplici e si raccolgono tutte insieme. L'AI separa le competenze elencate in voci distinte della lista, restando aderente alle parole dell'utente (separa sì, gonfia no). Nessun separatore imposto all'utente.
+- **Conferma anti-dimenticanza a un giro**: dopo la scheda, l'AI chiede esplicitamente se aggiungere o eliminare. Se l'utente aggiunge, l'AI ri-mostra la lista aggiornata e chiude (non riapre un secondo giro). Se conferma, si procede.
+- **Chiusura senza loop "altro?"**: a differenza dei turni-esperienza, il turno competenze non ha il loop "altro o procediamo?", perché la molteplicità è già gestita dentro la conferma in blocco. (Asimmetria voluta, conseguenza della natura diversa del campo.)
+- **Normalizzazione leggera** (come gli altri turni, qui ancora più importante): "me la cavo alla cassa" → "Uso della cassa", mai "gestione transazioni e contante". La tentazione di tradurre-in-CV è massima sulle competenze: si resta aderenti alle parole dell'utente.
+
+#### Turno `formazione` (ripetibile)
+
+*Ultimo turno del dialogo. Eredita l'impianto del turno `esperienze_formali` (lista di oggetti con sotto-campi): scheda con etichette, una voce alla volta, normalizzazione leggera, campo vuoto = (non specificata). Rischio anti-invenzione basso: un titolo di studio è un fatto verificabile, non un'autovalutazione.*
+
+**Apertura + patto:**
+
+Siamo all'ultimo campo: gli studi e i corsi. Diplomi, qualifiche, corsi di formazione — tutto quello che hai studiato o imparato in modo strutturato.
+Procediamo come prima, uno alla volta: tu me ne racconti uno, io ti mostro cosa ho capito e tu confermi o correggi.
+
+* Qual è il primo che ti viene in mente?
+
+**Conferma (scheda a vista), esempio:**
+
+Ecco cosa ho capito:
+– Titolo: Diploma alberghiero
+– Istituto: Istituto Cellini
+– Anno: (non specificata)
+
+Ho capito bene? Se c'è qualcosa da sistemare dimmelo, altrimenti andiamo avanti.
+
+**Reminder-ponte (dopo la conferma) + riapertura:**
+
+Perfetto, segnata.
+
+* Hai un'altra esperienza di studio o formazione, o abbiamo finito?
+
+(se l'utente ne ha un'altra → "Raccontami la prossima.")
+
+**Chiusura del dialogo (quando l'utente ha finito):**
+
+Perfetto, abbiamo finito di costruire il tuo profilo.
+Ecco un riepilogo di quello che ho raccolto:
+(riepilogo leggibile del profilo: nome, esperienze formali e informali, competenze, formazione)
+Userò soltanto queste informazioni — niente di inventato — per aiutarti a preparare CV e lettere su misura quando avrai un annuncio che ti interessa.
+
+**Note specifiche del turno formazione (logica di prompt):**
+
+- **Ricalco del turno esperienze formali**: stessa struttura a sotto-campi (titolo / istituto / anno), stessa meccanica (una voce alla volta, scheda con etichette, reminder-ponte "altro o procediamo?").
+- **Turno finale**: a differenza degli altri, la chiusura non rimanda a un campo successivo ma chiude il dialogo. La chiusura mostra un **riepilogo leggibile del profilo** (non un CV: il CV è un output dell'anello 4, non un dato sorgente — vale il principio "un profilo, molti CV") e ribadisce un'ultima volta il vincolo anti-invenzione, richiamando il "solo quelle" del turno nome.
+- **Sospeso**: il formato preciso del riepilogo leggibile (come rendere il profilo JSON in forma umana) è da decidere insieme all'interfaccia. La frase di chiusura è bozza grezza: la taratura fine va fatta quando si progetta l'anello annuncio→CV, per descrivere le potenzialità senza sovra-promettere.
+
 #### Regole trasversali ai turni ripetibili (logica di prompt, non testo visibile)
 
 1. **Campo vuoto** → mostrato come `(non specificata)`, mai riempito d'ufficio.

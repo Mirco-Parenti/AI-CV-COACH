@@ -366,3 +366,22 @@ Mi è venuto il dubbio se l'AI riuscisse a distinguere più esperienze raccontat
 ### Step 1.4 — Turni competenze e formazione (MVP)
 
 Competenze e formazione meritano un passo dedicato, separato dagli altri turni del dialogo. La ragione è il vincolo anti-invenzione: il turno delle competenze è il punto più esposto al rischio di gonfiamento dell'intero dialogo. Chiedere "che competenze hai?" a freddo invita l'utente a vendersi e l'AI a incassare abilità generiche mai dimostrate. Per questo ho scelto di non trattarlo in fretta in coda agli altri turni, ma di dedicargli (insieme a formazione, l'ultimo turno rimasto) uno step a sé, da progettare con cura particolare.
+
+**Cosa ho fatto**
+Ho progettato gli ultimi due turni del dialogo, competenze e formazione. Con questo l'anello 1 (raccolta del profilo via dialogo guidato) è completo a livello di testi. Competenze: turno ad ancoraggio leggero (è l'utente a dichiararle, non l'AI a proporle), con raccolta in blocco e una conferma anti-dimenticanza a un giro. Formazione: ricalco del turno esperienze formali, più la chiusura del dialogo, che mostra un riepilogo del profilo e ribadisce un'ultima volta il vincolo anti-invenzione.
+
+**Cosa ho imparato**
+Che non tutti i turni "ripetibili" sono uguali: le competenze hanno una meccanica diversa (raccolta in blocco invece che una voce alla volta) perché il campo è una lista di stringhe, non di oggetti ricchi come le esperienze. La struttura del turno deve seguire la natura del dato, non un unico stampo. E che il vincolo "un profilo, molti CV" ha conseguenze pratiche fin dentro la frase di chiusura: mi ha costretto a rinunciare al "CV neutrale" e scegliere un riepilogo.
+
+**Dove ho faticato / cosa non era ovvio**
+Due punti. Primo: volevo far generare a fine dialogo un "CV neutrale" da usare come base per i CV personalizzati. Sembrava utile, ma sfondava il principio "un profilo, molti CV" — un CV è un output, non una sorgente. Ci ho ragionato e ho capito che quello che cercavo davvero era un modo di vedere il risultato concreto, e per quello basta un riepilogo del profilo. Secondo: avevo aperto le competenze con "ultima cosa", ma non era l'ultima — mancava la formazione. Una promessa sbagliata all'utente, corretta solo perché mi sono fermato a guardare la frase nella sua posizione reale.
+
+**Cosa ho deciso e perché**
+- Ancoraggio leggero per le competenze (non forte): l'AI non propone competenze a partire dalle esperienze, le dichiara l'utente. Più snello per l'MVP e più fedele all'anti-invenzione (l'AI che propone è l'AI che inventa).
+- Raccolta in blocco per le competenze: imposta dalla natura del campo (stringhe brevi), evita un ping-pong assurdo di conferme una alla volta.
+- Niente CV neutrale, ma riepilogo del profilo: rispetta "un profilo, molti CV" e non anticipa l'anello 4 (generazione).
+- Formazione come ricalco delle esperienze formali: nessuna logica nuova, rischio invenzione basso perché un titolo di studio è un fatto verificabile.
+
+💡 *Mia intuizione / scelta ragionata* — La forma di un turno deve seguire la natura del suo campo. Competenze (lista di stringhe) → raccolta in blocco; esperienze e formazione (liste di oggetti) → una voce alla volta. Non ho forzato tutti i turni nello stesso stampo solo per coerenza apparente: la coerenza vera è di funzione, non di forma.
+
+💡 *Mia intuizione / scelta ragionata* — Il riepilogo del profilo al posto del CV neutrale non è solo una rinuncia per rispettare un principio: è una scelta migliore. Dà all'utente lo stesso senso di concretezza ("ecco cosa ho costruito"), ma fa anche intuire che il valore vero dell'app viene dopo — allineare il proprio profilo a un annuncio specifico. Un CV finito alla fine del dialogo avrebbe "chiuso"; il riepilogo apre.
