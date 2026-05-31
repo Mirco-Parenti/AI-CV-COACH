@@ -336,3 +336,29 @@ Non avevo notato che "una domanda per turno" non bastava come categoria. Tre cam
 💡 *Mia intuizione / scelta ragionata* — Strada A con ancoraggio via testo: il lavoro anti-invenzione sulle competenze lo sposto sulla formulazione della domanda, non su una regola nel codice. Il punto più delicato (chiedere "che competenze hai?" a freddo invita al gonfiamento) si disinnesca scegliendo bene le parole, non aggiungendo logica.
 
 💡 *Mia intuizione / scelta ragionata* — I "vuoti" dell'MVP non sono sprechi. Quando aggiungerò pending_questions, saranno proprio le voci da riprendere nel secondo giro. L'MVP fa la versione povera della stessa idea; il raffinamento la versione ricca. Niente da buttare.
+
+### Step 1.3 — Testi del dialogo: nome + turni-esperienza (MVP)
+
+*Scritto lo scheletro testuale dei primi tre turni. Mancano competenze e formazione, rimandati a sessione dedicata (le competenze sono il punto più delicato per l'anti-invenzione).*
+
+**Cosa ho fatto**
+Scritto i testi di tre turni: `nome` (singolo) e i due turni-esperienza `esperienze_formali` e `esperienze_informali` (ripetibili). Per i ripetibili ho definito i tre pezzi — apertura, conferma a scheda, reminder-ponte — e un "patto" esplicito che annuncia il meccanismo (una alla volta, ti mostro cosa ho capito, confermi o correggi, poi la prossima). I testi sono in prompt_design.md.
+
+**Cosa ho imparato**
+- La coerenza tra turni è di *funzione*, non di *lettera*: stesso patto, forma adattata al contesto (gli incipit "Partiamo…" e "Raccontami ora…" cambiano, il meccanismo no).
+- La domanda d'apertura fa lavoro anti-invenzione *diverso* a seconda del campo: nelle formali frena il gonfiamento, nelle informali dà il permesso. Stesso scheletro, insidia opposta.
+- Chiedere di raccontare una esperienza alla volta non serve solo all'ordine: serve a orientare l'utente a restare sui fatti e a ridurre il margine in cui l'LLM potrebbe inventare.
+
+**Dove ho faticato / cosa non era ovvio**
+Mi è venuto il dubbio se l'AI riuscisse a distinguere più esperienze raccontate insieme in un unico blocco. La risposta è che ci riuscirebbe, ma abbiamo capito che è meglio non chiederglielo: farglielo fare aprirebbe spazio a interpretazioni e quindi a invenzioni. Meglio orientare l'utente a procedere una alla volta e tenere il compito dell'AI ristretto.
+
+**Cosa ho deciso e perché**
+- Apertura stretta nelle formali (solo lavori, studi/corsi dopo): non caricare l'AI di cernita, restare fedeli all'ordine fisso deciso allo Step 1.2.
+- Conferma a scheda strutturata a vista: serve il controllo dell'utente e rende visibile il campo vuoto (anti-invenzione).
+- Campo vuoto = `(non specificata)`; normalizzazione leggera (riordina sì, traduci-in-CV no); tre esiti disponibili ma non recitati (invito aperto, meccanica nel prompt).
+- Patto esplicito in tutti i turni ripetibili: il meccanismo va spiegato la prima volta che compare, non la seconda.
+- "Una alla volta": invito gentile nel testo + regola di prompt (l'AI lavora la prima voce, le altre rientrano dal "altro o procediamo?").
+
+💡 *Mia intuizione / scelta ragionata* — L'insidia anti-invenzione è opposta nei due turni-esperienza: gonfiamento nelle formali, "suggerire troppo" nelle informali. Per questo negli esempi delle informali uso categorie larghe (aiutare un familiare, dare una mano in associazioni) invece di attività specifiche: invitare senza imboccare.
+
+💡 *Mia intuizione / scelta ragionata* — Far raccontare una esperienza alla volta non è un limite tecnico dell'AI (saprebbe separarle), ma una scelta di togliere margine di interpretazione, e quindi di invenzione. Stessa logica della cernita studi/lavori: orientare l'utente serve a tenere l'LLM sui fatti.
