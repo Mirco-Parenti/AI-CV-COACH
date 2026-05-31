@@ -385,3 +385,27 @@ Due punti. Primo: volevo far generare a fine dialogo un "CV neutrale" da usare c
 💡 *Mia intuizione / scelta ragionata* — La forma di un turno deve seguire la natura del suo campo. Competenze (lista di stringhe) → raccolta in blocco; esperienze e formazione (liste di oggetti) → una voce alla volta. Non ho forzato tutti i turni nello stesso stampo solo per coerenza apparente: la coerenza vera è di funzione, non di forma.
 
 💡 *Mia intuizione / scelta ragionata* — Il riepilogo del profilo al posto del CV neutrale non è solo una rinuncia per rispettare un principio: è una scelta migliore. Dà all'utente lo stesso senso di concretezza ("ecco cosa ho costruito"), ma fa anche intuire che il valore vero dell'app viene dopo — allineare il proprio profilo a un annuncio specifico. Un CV finito alla fine del dialogo avrebbe "chiuso"; il riepilogo apre.
+
+### Step 1.5 — Primo gesto implementativo: rete di sicurezza per la chiave (.gitignore)
+
+*Aperta la parte implementativa della Fase 1. Primo "codice" messo nel repo: non una funzione, ma la protezione che viene prima di tutto il resto.*
+
+**Cosa ho fatto**
+Posato il primo mattone operativo del progetto: creato e committato il file `.gitignore` con due righe (`.env` e `node_modules/`). Prima di farlo ho deciso l'architettura con cui l'app userà la chiave API di Anthropic (fornita da Riccardo). Ho verificato ogni passaggio con i miei occhi — contenuto del file con `cat`, presenza e posizione con `ls -a`, commit con `git log` — invece di fidarmi di quanto dichiarava lo strumento.
+
+**Cosa ho imparato**
+- Esistono due "superfici" di esposizione diverse, che all'inizio confondevo: il *repository* su GitHub (il codice pubblico, la cronologia) e l'*app in esecuzione* (quello che il browser di un visitatore carica). Il `.gitignore` protegge la prima; l'architettura con l'aiutante Node protegge la seconda. Sono difese diverse per problemi diversi.
+- L'ordine dei gesti conta: la rete di sicurezza va tesa *prima* che esista qualcosa da proteggere. Creando il `.gitignore` adesso, quando aggiungerò il `.env` con la chiave dentro Git lo ignorerà già — non ci sarà mai un istante in cui la chiave rischia di finire in un commit.
+- La differenza tra i terminali del sistema: aprendo una scheda nuova mi si è presentato Windows PowerShell invece di Ubuntu, e i comandi non funzionavano. Sono due ambienti diversi; i comandi che uso (`ls -a`, `cat`, `git` così come li scrivo) vivono in Ubuntu.
+
+**Dove ho faticato / cosa non era ovvio**
+Aprire una scheda col `+` non dà Ubuntu ma il terminale di default (PowerShell), e da lì niente andava. Ho dovuto scegliere Ubuntu dal menu a tendina e poi spostarmi a mano dentro il repo con `cd`, perché la scheda nuova partiva dalla home dell'utente e non dalla cartella del progetto.
+
+**Cosa ho deciso e perché**
+- Architettura con aiutante Node (la chiave dietro un piccolo server locale, non esposta nel browser) invece della via più semplice (chiamata diretta dal browser): l'app è destinata a essere mostrata al pubblico, meglio nascere puliti che rattoppare dopo. Il costo (un pezzo Node in più) è piccolo, perché Node è già installato sulla macchina.
+- `.gitignore` come primissimo gesto, prima di qualunque codice o chiave: la protezione prima dell'oggetto da proteggere.
+- Delegato commit e push a Claude Code, ma a nome mio e con titolo/descrizione decisi da me: prima ho verificato l'identità Git locale (`Mirco-Parenti`) per assicurarmi che il commit uscisse a mio nome e non sotto l'account di Riccardo.
+
+💡 *Mia intuizione / scelta ragionata* — Le due superfici di esposizione (repo vs app in esecuzione) sono il modo giusto per ragionare sulla sicurezza della chiave. Documentare tutto su GitHub, da solo, non bastava a giustificare l'aiutante Node: il repo era già protetto dal `.gitignore`. Quello che l'aiutante Node previene è un'altra cosa — la chiave visibile nel browser dell'app pubblicata. Capire *quale* problema sto risolvendo evita di scegliere una soluzione giusta per il motivo sbagliato.
+
+💡 *Mia intuizione / scelta ragionata* — Delegare a Claude Code la *scrittura* di un commit è comodo, ma il confine è il *controllo*: leggere cosa sta per fare prima di confermare resta compito mio. Stavolta è filata liscia perché la posta era bassa (un file da due righe); quando i commit toccheranno codice vero, quel "leggo prima di confermare" sarà la rete vera, non un passaggio formale.
