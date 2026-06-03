@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test — Struttura nome</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 640px;
+        margin: 3rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+      }
+      h1 { font-size: 1.3rem; }
+      textarea {
+        width: 100%;
+        min-height: 5rem;
+        font: inherit;
+        padding: 0.5rem;
+        box-sizing: border-box;
+      }
+      button {
+        margin-top: 0.75rem;
+        padding: 0.5rem 1rem;
+        font: inherit;
+        cursor: pointer;
+      }
+      button:disabled { cursor: default; opacity: 0.6; }
+      pre {
+        background: #f4f4f4;
+        padding: 1rem;
+        border-radius: 6px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        min-height: 1.5rem;
+      }
+      .errore { color: #b00020; }
+    </style>
+  </head>
+  <body>
+    <h1>Test endpoint <code>POST /struttura-nome</code></h1>
+    <p>Scrivi una risposta come se fossi l'utente, poi invia.</p>
+
+    <label for="risposta">Risposta dell'utente:</label>
+    <textarea id="risposta" placeholder="Es: Ciao, mi chiamo Mario Rossi"></textarea>
+
+    <button id="invia">Struttura nome</button>
+
+    <h2>Risposta del server</h2>
+    <pre id="output"></pre>
+
+    <script>
+      const ENDPOINT = "http://localhost:3000/struttura-nome";
+      const bottone = document.getElementById("invia");
+      const campo = document.getElementById("risposta");
+      const output = document.getElementById("output");
+
+      bottone.addEventListener("click", async () => {
+        output.classList.remove("errore");
+        output.textContent = "Attendere…";
+        bottone.disabled = true;
+
+        try {
+          const res = await fetch(ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ risposta: campo.value }),
+          });
+          const testo = await res.text();
+          // Mostriamo il JSON così com'è arrivato dal server (verbatim dal modello).
+          output.textContent = testo;
+        } catch (err) {
+          output.classList.add("errore");
+          output.textContent =
+            "Errore di rete: il server è avviato su http://localhost:3000? (" + err.message + ")";
+        } finally {
+          bottone.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
