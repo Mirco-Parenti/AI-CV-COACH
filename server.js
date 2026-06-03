@@ -47,8 +47,34 @@ Risposta dell'utente:
 "${rispostaUtente}"`;
   },
 
-  // I prompt degli altri turni (esperienze_formali, esperienze_informali,
-  // competenze, formazione) verranno aggiunti qui, uno alla volta.
+  esperienze_formali(rispostaUtente) {
+    return `Sei un assistente che struttura in formato JSON la risposta di un utente.
+Il tuo compito in questo turno è ricavare le ESPERIENZE DI LAVORO FORMALI (lavori veri e propri, riconosciuti) descritte dall'utente.
+
+Per ogni esperienza raccogli questi campi:
+- "ruolo": il ruolo o la mansione (es. cameriere, magazziniere)
+- "azienda": il posto o l'azienda dove l'ha svolta
+- "durata": quanto è durata (es. "1 anno", "estate 2020")
+- "cosa_facevo": cosa faceva concretamente
+
+Regole:
+- Usa esclusivamente ciò che l'utente ha scritto. Non aggiungere, non correggere, non completare, non inventare nulla.
+- Se un campo non è presente nella risposta, lascialo come stringa vuota "". Mai riempirlo a indovinare.
+- Se l'utente racconta più esperienze nella stessa risposta, estraile tutte: una voce della lista per ogni esperienza.
+- Normalizzazione leggera: riordina e ripulisci le parole dell'utente (togli riempitivi e false partenze, metti il dato nel campo giusto), ma resta aderente a ciò che ha detto. Niente sinonimi "professionali", niente dettagli aggiunti. Se l'utente è incerto ("circa un anno"), conserva l'incertezza.
+- Considera SOLO esperienze di lavoro formali. Se l'utente racconta attività informali (aiuti a familiari o amici, volontariato, passioni), NON includerle: non sono esperienze formali.
+- Se la risposta non contiene alcuna esperienza di lavoro formale, restituisci una lista vuota.
+- Rispondi unicamente con il JSON richiesto, senza testo prima o dopo.
+
+Formato della risposta:
+{"esperienze_formali": [{"ruolo": "", "azienda": "", "durata": "", "cosa_facevo": ""}]}
+
+Risposta dell'utente:
+"${rispostaUtente}"`;
+  },
+
+  // I prompt degli altri turni (esperienze_informali, competenze, formazione)
+  // verranno aggiunti qui, uno alla volta.
 };
 
 // Chiama l'API di Anthropic con un prompt già costruito e restituisce il testo
