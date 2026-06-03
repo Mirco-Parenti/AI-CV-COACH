@@ -98,8 +98,26 @@ Risposta dell'utente:
 "${rispostaUtente}"`;
   },
 
-  // I prompt degli altri turni (competenze, formazione) verranno aggiunti qui,
-  // uno alla volta.
+  competenze(rispostaUtente) {
+    return `Sei un assistente che struttura in formato JSON la risposta di un utente.
+Il tuo compito in questo turno è ricavare le COMPETENZE che l'utente dichiara di saper fare: abilità pratiche o trasversali.
+
+Regole:
+- Usa esclusivamente ciò che l'utente ha scritto. Non aggiungere, non correggere, non completare, non inventare nulla.
+- Estrai SOLO le competenze che l'utente dichiara esplicitamente in questa risposta. NON dedurre competenze dalle esperienze o da ciò che "sembra implicito": sarebbe un'invenzione.
+- Se l'utente elenca più competenze, separale in voci distinte della lista: una stringa per competenza. Non imporre un formato all'utente; sei tu a separare.
+- Normalizzazione leggera (qui particolarmente importante): ripulisci il modo di dire in un'etichetta semplice e aderente alle parole dell'utente, senza gonfiarla in gergo professionale. Esempio: "me la cavo alla cassa" → "Uso della cassa", MAI "gestione transazioni e contante".
+- Se la risposta non contiene alcuna competenza, restituisci una lista vuota.
+- Rispondi unicamente con il JSON richiesto, senza testo prima o dopo.
+
+Formato della risposta:
+{"competenze": ["<competenza>", "<competenza>"]}
+
+Risposta dell'utente:
+"${rispostaUtente}"`;
+  },
+
+  // Il prompt dell'ultimo turno (formazione) verrà aggiunto qui.
 };
 
 // Chiama l'API di Anthropic con un prompt già costruito e restituisce il testo
