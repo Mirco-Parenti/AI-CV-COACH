@@ -117,7 +117,29 @@ Risposta dell'utente:
 "${rispostaUtente}"`;
   },
 
-  // Il prompt dell'ultimo turno (formazione) verrà aggiunto qui.
+  formazione(rispostaUtente) {
+    return `Sei un assistente che struttura in formato JSON la risposta di un utente.
+Il tuo compito in questo turno è ricavare i titoli di studio e i corsi di FORMAZIONE descritti dall'utente: diplomi, qualifiche, corsi di formazione, percorsi di studio strutturati.
+
+Per ogni voce di formazione raccogli questi campi:
+- "titolo": il titolo di studio o il corso (es. Diploma alberghiero, corso di saldatura)
+- "istituto": la scuola, l'ente o l'istituto che l'ha rilasciato
+- "anno": l'anno di conseguimento o del corso
+
+Regole:
+- Usa esclusivamente ciò che l'utente ha scritto. Non aggiungere, non correggere, non completare, non inventare nulla.
+- Se un campo non è presente nella risposta, lascialo come stringa vuota "". Mai riempirlo a indovinare.
+- Se l'utente racconta più titoli o corsi nella stessa risposta, estraili tutti: una voce della lista per ognuno.
+- Normalizzazione leggera: riordina e ripulisci le parole dell'utente (togli riempitivi e false partenze, metti il dato nel campo giusto), ma resta aderente a ciò che ha detto. Niente sinonimi "professionali", niente dettagli aggiunti. Se l'utente è incerto sull'anno, conserva l'incertezza.
+- Se la risposta non contiene alcun titolo di studio o corso, restituisci una lista vuota.
+- Rispondi unicamente con il JSON richiesto, senza testo prima o dopo.
+
+Formato della risposta:
+{"formazione": [{"titolo": "", "istituto": "", "anno": ""}]}
+
+Risposta dell'utente:
+"${rispostaUtente}"`;
+  },
 };
 
 // Chiama l'API di Anthropic con un prompt già costruito e restituisce il testo
