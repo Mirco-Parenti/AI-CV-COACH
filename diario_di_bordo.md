@@ -434,3 +434,25 @@ Allo Step 1.5 avevo motivato la scelta dell'aiutante Node dicendo che "l'app è 
 💡 *Mia intuizione / scelta ragionata* — Trattare l'aiutante Node come "impalcatura da cantiere" è economia, non pigrizia: studiarne il codice sarebbe tempo sprecato, visto che alla migrazione verrà smontato. Metto l'attenzione dove resta valore (il dialogo), non dove verrà buttato.
 
 💡 *Mia intuizione / scelta ragionata* — La migrazione HTML→VB.NET non mi spaventa più da quando ho capito il confine tra "faccia" e "motore": butterò solo il frontend HTML e l'aiutante Node, mentre il cuore del progetto (dialogo, prompt, schema, anti-invenzione) resta. Non butto via tutto, butto via l'impalcatura.
+
+### Step 1.7 — Prima esecuzione reale: impalcatura e strutturazione dei turni
+
+*Primo pezzo di progetto vivo: l'impalcatura per far girare la strutturazione con chiamata reale all'AI, e il collaudo dei turni sul campo.*
+
+**Cosa ho fatto**
+Delegato a Claude Code il montaggio dell'impalcatura Node.js (il server locale e il collegamento alla chiave API). Creato io il file `.env` con la chiave. Poi ho fatto girare i turni di strutturazione e li ho testati io, dalla test-page HTML. Ho lavorato su un branch parallelo (`step-2-prompt-router`); a fine lavoro ho fatto il merge in `main`, ho eliminato il branch usato e ho aperto un nuovo branch (`step-3-orchestrazione-frontend`) per procedere. Ora `main` è aggiornato e sono pronto sul nuovo branch.
+
+**Cosa ho imparato / verificato**
+- L'anti-invenzione tiene sul campo. L'ho messa alla prova io, scrivendo input volutamente sporchi e imprecisi, più volte: l'AI ha sempre strutturato solo ciò che avevo davvero detto, senza inventare, gonfiare o riempire i vuoti. Vedere la regola reggere su input reali è diverso dall'averla decisa a tavolino.
+- La rete del `.gitignore` ha retto anche delegando il lavoro a Claude Code. Il file `.env` vive sul disco con la chiave dentro, ma Git non lo traccia (verificato: non compare tra i file versionati) perché il `.gitignore` lo esclude. Quindi la chiave non è mai entrata in un commit né è finita su GitHub: che il file esista sul disco non significa che Git lo veda.
+
+**Dove ho faticato / cosa non era ovvio**
+Avevo deciso di costruire solo il turno `nome`. Claude Code, in autonomia, ha realizzato tutti e cinque i turni — ma uno alla volta: prima di procedere con il turno successivo me lo sottoponeva, e io lo modificavo o lo confermavo. Lo scope è quindi cresciuto oltre il `nome` previsto, ma è rimasto sotto il mio controllo, turno per turno.
+
+**Cosa ho deciso e perché**
+- I prompt di strutturazione dei quattro turni diversi da `nome` restano per ora dentro `server.js`, in forma provvisoria: andranno in `prompt_design.md` solo una volta definitivi. Il design deve contenere i prompt finali, non le bozze di prova.
+- Due rifiniture tecniche segnate come lavoro in arrivo: togliere il fence markdown che il modello a volte aggiunge attorno al JSON (le marcature di blocco-codice), così il programma può leggere il JSON pulito; e riportare i turni-lista a "una voce per turno", coerentemente con la struttura decisa agli Step 1.2–1.3.
+
+💡 *Mia intuizione / scelta ragionata* — Delego l'esecuzione, non il controllo né le decisioni di design. Claude Code può scrivere il codice e proporre, ma cosa si costruisce, in che ordine e con quali scelte di fondo resta una mia responsabilità: il mio compito è guidare e leggere ciò che produce, non firmare a scatola chiusa.
+
+💡 *Mia intuizione / scelta ragionata* — Il valore del progetto (i prompt, il dialogo) deve finire nel design una volta che è definitivo, non nel codice usa-e-getta che sto usando ora solo per testare e collaudare il processo. La test-page e l'aiutante Node sono impalcatura temporanea verso VB.NET; `prompt_design.md` è ciò che resta.
