@@ -402,7 +402,7 @@ Lo schema ha due zone: il **nucleo confrontabile** col profilo (competenze, espe
   "esperienza_richiesta": [{ "testo": "", "priorita": "" }],
   "formazione_richiesta": [{ "testo": "", "priorita": "" }],
   "titolo": "",
-  "sede": "",
+  "sede": [],
   "contratto": { "tipo": "", "durata": "", "orario": "", "retribuzione": "" },
   "mansioni": [],
   "benefit": []
@@ -424,7 +424,7 @@ Lo schema ha due zone: il **nucleo confrontabile** col profilo (competenze, espe
     { "testo": "diploma alberghiero", "priorita": "preferenziale" }
   ],
   "titolo": "Cameriere di sala",
-  "sede": "Firenze, centro",
+  "sede": ["Firenze, centro"],
   "contratto": { "tipo": "tempo determinato", "durata": "6 mesi", "orario": "full-time", "retribuzione": "" },
   "mansioni": ["servizio ai tavoli", "preparazione della sala", "gestione della cassa"],
   "benefit": ["pasto incluso", "due giorni di riposo a settimana"]
@@ -436,7 +436,7 @@ Lo schema ha due zone: il **nucleo confrontabile** col profilo (competenze, espe
 - `competenze_richieste`, `esperienza_richiesta`, `formazione_richiesta` — liste di oggetti `{ testo, priorita }`. Sono il nucleo confrontabile col profilo (rispettivamente con `competenze`, `esperienze_formali`/`esperienze_informali`, `formazione`).
 - `priorita` — uno tra `richiesto` (l'annuncio dice indispensabile/richiesto), `preferenziale` (gradito/preferenziale/plus), `non specificata` (l'annuncio non lo qualifica). Si assegna **solo se esplicito**; in mancanza, `non specificata` (default sicuro).
 - `titolo` — il ruolo dell'annuncio (stringa).
-- `sede` — il luogo di lavoro (es. città, zona, "da remoto").
+- `sede` — i luoghi di lavoro, come lista di stringhe (una voce per sede distinta; "da remoto" è una voce valida).
 - `contratto` — sotto-oggetto a campi opzionali (tipo, durata, orario, retribuzione); si riempie solo ciò che l'annuncio dichiara (es. la retribuzione spesso non è indicata → resta vuota).
 - `mansioni` — lista di stringhe: cosa si farà nel ruolo (diverso da cosa si deve possedere).
 - `benefit` — lista di stringhe: extra oltre la paga (buoni pasto, smart working, formazione, ecc.), distinti dai termini del `contratto`.
@@ -450,7 +450,54 @@ Lo schema ha due zone: il **nucleo confrontabile** col profilo (competenze, espe
 
 #### Prompt di analisi annuncio
 
-Da definire (prossimo passo).
+Prompt inviato all'AI per strutturare un annuncio di lavoro nello schema qui sopra. Il programma inserisce il testo incollato dell'annuncio al posto del segnaposto; l'AI risponde unicamente con il JSON completo dello schema.
+
+```
+Sei un assistente che struttura in formato JSON il testo di un annuncio di lavoro.
+Il tuo compito è ricavare dall'annuncio i requisiti e le informazioni, organizzandoli nello schema richiesto.
+
+Nucleo confrontabile — distingui tre tipi di requisito, ognuno una lista di oggetti { "testo": ..., "priorita": ... }:
+- "competenze_richieste": abilità pratiche o trasversali che il candidato deve possedere (es. uso della cassa, lavoro in team).
+- "esperienza_richiesta": esperienze pregresse o anni di lavoro richiesti (es. "1 anno come cameriere", "esperienza nella ristorazione").
+- "formazione_richiesta": titoli di studio, qualifiche o corsi richiesti (es. diploma alberghiero, patentino HACCP).
+
+Campi di contesto:
+- "titolo": il ruolo dell'annuncio.
+- "sede": i luoghi di lavoro, come lista di stringhe (una voce per sede distinta; "da remoto" è una voce valida).
+- "contratto": oggetto { "tipo", "durata", "orario", "retribuzione" }; riempi solo i campi che l'annuncio dichiara.
+- "mansioni": cosa si farà concretamente nel ruolo, come lista di stringhe.
+- "benefit": vantaggi offerti oltre la paga (buoni pasto, smart working, formazione, ecc.), come lista di stringhe.
+
+Priorità (campo "priorita" di ogni requisito):
+- "richiesto": l'annuncio lo qualifica come obbligatorio (parole come "richiesto", "indispensabile", "necessario", "obbligatorio", o perché elencato in una sezione di requisiti richiesti).
+- "preferenziale": l'annuncio lo qualifica come gradito ma non obbligatorio ("gradito", "preferibile", "preferenziale", "costituisce un plus / titolo preferenziale", o perché in una sezione di preferenze).
+- "non specificata": l'annuncio non lo qualifica in alcun modo. NON dedurre la priorità dall'importanza che il requisito sembra avere: usa solo segnali espliciti, di parola o di sezione.
+
+Regole generali:
+- Usa esclusivamente ciò che l'annuncio scrive. Non aggiungere requisiti, mansioni o benefit "tipici" o "plausibili" non presenti nel testo. Non inventare nulla.
+- Distingui mansioni e requisiti: ciò che si FARÀ va in "mansioni"; ciò che il candidato deve AVERE va nei tre requisiti. Non mettere lo stesso elemento in entrambi.
+- Non duplicare: ogni requisito va in una sola delle tre dimensioni, la più calzante.
+- Separa i requisiti composti in voci distinte (es. "esperienza nella ristorazione e con la cassa" → due voci), restando aderente alle parole dell'annuncio: separa sì, gonfia no.
+- Normalizzazione leggera: riordina e ripulisci, ma resta aderente al testo; niente parafrasi che aggiungono o tolgono significato, niente sinonimi "professionali".
+- Campi mancanti: stringa vuota "" o lista vuota []. Nel "contratto" ogni campo è opzionale (es. la retribuzione spesso non è indicata → resta vuota).
+- Se il testo non è un annuncio di lavoro, restituisci lo schema con tutti i campi vuoti.
+- Rispondi unicamente con il JSON richiesto, senza testo prima o dopo.
+
+Formato della risposta:
+{
+  "competenze_richieste": [{ "testo": "", "priorita": "" }],
+  "esperienza_richiesta": [{ "testo": "", "priorita": "" }],
+  "formazione_richiesta": [{ "testo": "", "priorita": "" }],
+  "titolo": "",
+  "sede": [],
+  "contratto": { "tipo": "", "durata": "", "orario": "", "retribuzione": "" },
+  "mansioni": [],
+  "benefit": []
+}
+
+Annuncio:
+"<qui il programma inserirà il testo dell'annuncio>"
+```
 
 ### Confronto profilo-annuncio
 
