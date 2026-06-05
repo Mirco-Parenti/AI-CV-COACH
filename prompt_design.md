@@ -174,6 +174,36 @@ Perfetto, segnata.
 
 (se l'utente ne ha un'altra → "Raccontami la prossima.")
 
+**Prompt di strutturazione (logica di prompt):**
+
+Prompt inviato all'AI per ricavare le voci di `esperienze_formali` dalla risposta dell'utente. Il programma inserisce la risposta al posto del segnaposto; l'AI risponde unicamente con il JSON (una lista di voci, eventualmente vuota).
+
+```
+Sei un assistente che struttura in formato JSON la risposta di un utente.
+Il tuo compito in questo turno è ricavare le ESPERIENZE DI LAVORO FORMALI (lavori veri e propri, riconosciuti) descritte dall'utente.
+
+Per ogni esperienza raccogli questi campi:
+- "ruolo": il ruolo o la mansione (es. cameriere, magazziniere)
+- "azienda": il posto o l'azienda dove l'ha svolta
+- "durata": quanto è durata (es. "1 anno", "estate 2020")
+- "cosa_facevo": cosa faceva concretamente
+
+Regole:
+- Usa esclusivamente ciò che l'utente ha scritto. Non aggiungere, non correggere, non completare, non inventare nulla.
+- Se un campo non è presente nella risposta, lascialo come stringa vuota "". Mai riempirlo a indovinare.
+- Se l'utente racconta più esperienze nella stessa risposta, estraile tutte: una voce della lista per ogni esperienza.
+- Normalizzazione leggera: riordina e ripulisci le parole dell'utente (togli riempitivi e false partenze, metti il dato nel campo giusto), ma resta aderente a ciò che ha detto. Niente sinonimi "professionali", niente dettagli aggiunti. Se l'utente è incerto ("circa un anno"), conserva l'incertezza.
+- Considera SOLO esperienze di lavoro formali. Se l'utente racconta attività informali (aiuti a familiari o amici, volontariato, passioni), NON includerle: non sono esperienze formali.
+- Se la risposta non contiene alcuna esperienza di lavoro formale, restituisci una lista vuota.
+- Rispondi unicamente con il JSON richiesto, senza testo prima o dopo.
+
+Formato della risposta:
+{"esperienze_formali": [{"ruolo": "", "azienda": "", "durata": "", "cosa_facevo": ""}]}
+
+Risposta dell'utente:
+"<qui il programma inserirà ciò che ha scritto l'utente>"
+```
+
 #### Turno `esperienze_informali` (ripetibile)
 
 **Apertura + patto:**
@@ -193,6 +223,35 @@ Ecco cosa ho capito:
 Ho capito bene? Se c'è qualcosa da sistemare dimmelo, altrimenti andiamo avanti.
 
 **Reminder-ponte + riapertura:** come nel turno formali, adattato.
+
+**Prompt di strutturazione (logica di prompt):**
+
+Prompt inviato all'AI per ricavare le voci di `esperienze_informali` dalla risposta dell'utente. Il programma inserisce la risposta al posto del segnaposto; l'AI risponde unicamente con il JSON (una lista di voci, eventualmente vuota).
+
+```
+Sei un assistente che struttura in formato JSON la risposta di un utente.
+Il tuo compito in questo turno è ricavare le ESPERIENZE INFORMALI descritte dall'utente: attività che NON sono un lavoro vero e proprio — aiuti a familiari, amici o vicini, una mano in associazioni o eventi, volontariato, passioni che hanno insegnato qualcosa, esperienze brevi e occasionali.
+
+Per ogni esperienza raccogli questi campi (tutti facoltativi per natura):
+- "cosa_facevo": l'attività svolta
+- "quando": il periodo o la frequenza (es. "le estati 2018-2020")
+- "con_chi": persone, famiglia, gruppo o realtà con cui l'ha svolta
+
+Regole:
+- Usa esclusivamente ciò che l'utente ha scritto. Non aggiungere, non correggere, non completare, non inventare nulla.
+- Se un campo non è presente nella risposta, lascialo come stringa vuota "". Mai riempirlo a indovinare. Per queste esperienze è normale che "quando" e "con_chi" manchino.
+- Se l'utente racconta più esperienze nella stessa risposta, estraile tutte: una voce della lista per ogni esperienza.
+- Normalizzazione leggera: riordina e ripulisci le parole dell'utente (togli riempitivi e false partenze, metti il dato nel campo giusto), ma resta aderente a ciò che ha detto. Niente sinonimi "professionali", niente dettagli aggiunti. Se l'utente è incerto, conserva l'incertezza.
+- Considera SOLO esperienze informali. Se l'utente racconta un lavoro formale vero e proprio (impiego retribuito con ruolo e azienda), NON includerlo qui: appartiene a un altro turno.
+- Se la risposta non contiene alcuna esperienza informale, restituisci una lista vuota.
+- Rispondi unicamente con il JSON richiesto, senza testo prima o dopo.
+
+Formato della risposta:
+{"esperienze_informali": [{"cosa_facevo": "", "quando": "", "con_chi": ""}]}
+
+Risposta dell'utente:
+"<qui il programma inserirà ciò che ha scritto l'utente>"
+```
 
 #### Turno `competenze` (ripetibile, raccolta in blocco)
 
@@ -221,6 +280,29 @@ Perfetto, aggiungo "Lavoro in squadra". Allora le tue competenze sono queste:
 – Lavoro in squadra
 
 * Le confermiamo e andiamo avanti?
+
+**Prompt di strutturazione (logica di prompt):**
+
+Prompt inviato all'AI per ricavare le voci di `competenze` dalla risposta dell'utente. Il programma inserisce la risposta al posto del segnaposto; l'AI risponde unicamente con il JSON (una lista di stringhe, eventualmente vuota).
+
+```
+Sei un assistente che struttura in formato JSON la risposta di un utente.
+Il tuo compito in questo turno è ricavare le COMPETENZE che l'utente dichiara di saper fare: abilità pratiche o trasversali.
+
+Regole:
+- Usa esclusivamente ciò che l'utente ha scritto. Non aggiungere, non correggere, non completare, non inventare nulla.
+- Estrai SOLO le competenze che l'utente dichiara esplicitamente in questa risposta. NON dedurre competenze dalle esperienze o da ciò che "sembra implicito": sarebbe un'invenzione.
+- Se l'utente elenca più competenze, separale in voci distinte della lista: una stringa per competenza. Non imporre un formato all'utente; sei tu a separare.
+- Normalizzazione leggera (qui particolarmente importante): ripulisci il modo di dire in un'etichetta semplice e aderente alle parole dell'utente, senza gonfiarla in gergo professionale. Esempio: "me la cavo alla cassa" → "Uso della cassa", MAI "gestione transazioni e contante".
+- Se la risposta non contiene alcuna competenza, restituisci una lista vuota.
+- Rispondi unicamente con il JSON richiesto, senza testo prima o dopo.
+
+Formato della risposta:
+{"competenze": ["<competenza>", "<competenza>"]}
+
+Risposta dell'utente:
+"<qui il programma inserirà ciò che ha scritto l'utente>"
+```
 
 **Note specifiche del turno competenze (logica di prompt):**
 
@@ -265,6 +347,34 @@ Ecco un riepilogo di quello che ho raccolto:
 (riepilogo leggibile del profilo: nome, esperienze formali e informali, competenze, formazione)
 Userò soltanto queste informazioni — niente di inventato — per aiutarti a preparare CV e lettere su misura quando avrai un annuncio che ti interessa.
 
+**Prompt di strutturazione (logica di prompt):**
+
+Prompt inviato all'AI per ricavare le voci di `formazione` dalla risposta dell'utente. Il programma inserisce la risposta al posto del segnaposto; l'AI risponde unicamente con il JSON (una lista di voci, eventualmente vuota).
+
+```
+Sei un assistente che struttura in formato JSON la risposta di un utente.
+Il tuo compito in questo turno è ricavare i titoli di studio e i corsi di FORMAZIONE descritti dall'utente: diplomi, qualifiche, corsi di formazione, percorsi di studio strutturati.
+
+Per ogni voce di formazione raccogli questi campi:
+- "titolo": il titolo di studio o il corso (es. Diploma alberghiero, corso di saldatura)
+- "istituto": la scuola, l'ente o l'istituto che l'ha rilasciato
+- "anno": l'anno di conseguimento o del corso
+
+Regole:
+- Usa esclusivamente ciò che l'utente ha scritto. Non aggiungere, non correggere, non completare, non inventare nulla.
+- Se un campo non è presente nella risposta, lascialo come stringa vuota "". Mai riempirlo a indovinare.
+- Se l'utente racconta più titoli o corsi nella stessa risposta, estraili tutti: una voce della lista per ognuno.
+- Normalizzazione leggera: riordina e ripulisci le parole dell'utente (togli riempitivi e false partenze, metti il dato nel campo giusto), ma resta aderente a ciò che ha detto. Niente sinonimi "professionali", niente dettagli aggiunti. Se l'utente è incerto sull'anno, conserva l'incertezza.
+- Se la risposta non contiene alcun titolo di studio o corso, restituisci una lista vuota.
+- Rispondi unicamente con il JSON richiesto, senza testo prima o dopo.
+
+Formato della risposta:
+{"formazione": [{"titolo": "", "istituto": "", "anno": ""}]}
+
+Risposta dell'utente:
+"<qui il programma inserirà ciò che ha scritto l'utente>"
+```
+
 **Note specifiche del turno formazione (logica di prompt):**
 
 - **Ricalco del turno esperienze formali**: stessa struttura a sotto-campi (titolo / istituto / anno), stessa meccanica (una voce alla volta, scheda con etichette, reminder-ponte "altro o procediamo?").
@@ -276,7 +386,7 @@ Userò soltanto queste informazioni — niente di inventato — per aiutarti a p
 1. **Campo vuoto** → mostrato come `(non specificata)`, mai riempito d'ufficio.
 2. **Normalizzazione leggera**: l'AI riordina e ripulisce (toglie riempitivi, false partenze; mette il dato nel campo giusto), resta aderente alle parole dell'utente. Niente sinonimi "professionali", niente dettagli aggiunti. Conserva il "circa" se l'utente è incerto: non irrigidire un forse in un sì.
 3. **Tre esiti** dopo la scheda (conferma / correggi un campo / ripeti): disponibili tutti, ma non recitati in un menu. Il testo è un invito aperto; la meccanica vive nel prompt.
-4. **Più voci insieme**: se l'utente racconta più esperienze in un blocco, l'AI ne lavora una sola; le altre rientrano dal reminder "altro o procediamo?". Limite noto MVP: voci molto stringate elencate insieme possono perdersi (raffinamento futuro, parente di pending_questions).
+4. **Più voci insieme**: se l'utente racconta più esperienze in un blocco, l'AI le estrae **tutte** (una voce della lista per ciascuna) e le presenta insieme, in **conferma in blocco**. *(Decisione dello Step 1.8: il prompt validato estrae tutte le voci. Supera l'impostazione iniziale dell'MVP — "l'AI ne lavora una sola, le altre rientrano dal reminder 'altro o procediamo?'" — che mirava a ridurre il margine di interpretazione.)* I **testi visibili** continuano a invitare l'utente a procedere con calma, una alla volta: l'invito resta, cambia solo la logica del prompt, ora capace di gestire più voci nella stessa risposta.
 
 ### Analisi annuncio di lavoro
 
