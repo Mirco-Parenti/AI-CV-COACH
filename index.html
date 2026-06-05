@@ -3,98 +3,595 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Test — Struttura turno</title>
+    <title>AI-CV-COACH — Costruiamo il tuo profilo</title>
     <style>
+      :root {
+        --bordo: #e0e0e0;
+        --ai-bg: #f1f3f5;
+        --utente-bg: #d9eaff;
+      }
       body {
         font-family: system-ui, sans-serif;
-        max-width: 640px;
-        margin: 3rem auto;
+        max-width: 680px;
+        margin: 2rem auto;
         padding: 0 1rem;
         line-height: 1.5;
+        color: #1a1a1a;
       }
-      h1 { font-size: 1.3rem; }
+      h1 { font-size: 1.2rem; }
+
+      /* Area conversazione: i messaggi si impilano dall'alto verso il basso. */
+      #chat {
+        border: 1px solid var(--bordo);
+        border-radius: 8px;
+        padding: 1rem;
+        min-height: 50vh;
+        max-height: 60vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        background: #fff;
+      }
+      .bolla {
+        max-width: 85%;
+        padding: 0.55rem 0.8rem;
+        border-radius: 12px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .ai { align-self: flex-start; background: var(--ai-bg); border-bottom-left-radius: 3px; }
+      .utente { align-self: flex-end; background: var(--utente-bg); border-bottom-right-radius: 3px; }
+      .scheda {
+        align-self: flex-start;
+        max-width: 85%;
+        background: #fff;
+        border: 1px solid var(--bordo);
+        border-left: 3px solid #4a90d9;
+        border-radius: 8px;
+        padding: 0.55rem 0.8rem;
+      }
+      .scheda h4 { margin: 0 0 0.3rem; font-size: 0.95rem; }
+      .scheda ul { margin: 0.2rem 0; padding-left: 1.1rem; }
+      .vuoto { color: #888; font-style: italic; }
+
+      /* Area di interazione: ospita o la casella di testo o i bottoni. */
+      #azione { margin-top: 0.9rem; }
       textarea {
         width: 100%;
-        min-height: 5rem;
+        min-height: 4rem;
         font: inherit;
         padding: 0.5rem;
         box-sizing: border-box;
+        border: 1px solid var(--bordo);
+        border-radius: 6px;
       }
       button {
-        margin-top: 0.75rem;
         padding: 0.5rem 1rem;
         font: inherit;
         cursor: pointer;
-      }
-      button:disabled { cursor: default; opacity: 0.6; }
-      select { font: inherit; padding: 0.4rem; }
-      .riga { margin-bottom: 0.75rem; }
-      pre {
-        background: #f4f4f4;
-        padding: 1rem;
+        border: 1px solid #b9b9b9;
         border-radius: 6px;
-        white-space: pre-wrap;
-        word-break: break-word;
-        min-height: 1.5rem;
+        background: #fafafa;
       }
+      button:hover { background: #f0f0f0; }
+      button.primario { background: #4a90d9; color: #fff; border-color: #3a7bc0; }
+      button.primario:hover { background: #3a7bc0; }
+      .bottoni { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+      .fila-invia { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+      .fila-invia button { white-space: nowrap; }
       .errore { color: #b00020; }
     </style>
   </head>
   <body>
-    <h1>Test endpoint <code>POST /struttura</code></h1>
-    <p>Scegli il turno, scrivi una risposta come se fossi l'utente, poi invia.</p>
+    <h1>Costruiamo insieme il tuo profilo</h1>
 
-    <div class="riga">
-      <label for="turno">Turno:</label>
-      <select id="turno">
-        <option value="nome">nome</option>
-        <option value="esperienze_formali">esperienze_formali</option>
-        <option value="esperienze_informali">esperienze_informali</option>
-        <option value="competenze">competenze</option>
-        <option value="formazione">formazione</option>
-      </select>
-    </div>
-
-    <label for="risposta">Risposta dell'utente:</label>
-    <textarea id="risposta" placeholder="Es: Ciao, mi chiamo Mario Rossi"></textarea>
-
-    <button id="invia">Struttura</button>
-
-    <h2>Risposta del server</h2>
-    <pre id="output"></pre>
+    <div id="chat" aria-live="polite"></div>
+    <div id="azione"></div>
 
     <script>
+      // ====================================================================
+      // AI-CV-COACH — orchestrazione del dialogo (front-end).
+      //
+      // Il server è senza stato: a ogni turno gli mandiamo { turno, risposta }
+      // e ci restituisce un frammento JSON. La MEMORIA del profilo e il FLUSSO
+      // del dialogo vivono qui, nel browser.
+      //
+      // Tre tipi di turno:
+      //  - singolo    (nome): una risposta, un campo.
+      //  - ripetibile (esperienze, formazione): lista di voci, con loop
+      //                "altro o procediamo?".
+      //  - blocco     (competenze): lista di stringhe, con un giro di aggiunta.
+      // ====================================================================
+
       const ENDPOINT = "http://localhost:3000/struttura";
-      const bottone = document.getElementById("invia");
-      const campo = document.getElementById("risposta");
-      const selettoreTurno = document.getElementById("turno");
-      const output = document.getElementById("output");
 
-      bottone.addEventListener("click", async () => {
-        output.classList.remove("errore");
-        output.textContent = "Attendere…";
-        bottone.disabled = true;
+      // --- Stato: il profilo, unica fonte di verità (ricalca lo schema). ---
+      const profilo = {
+        nome: "",
+        esperienze_formali: [],
+        esperienze_informali: [],
+        competenze: [],
+        formazione: [],
+      };
 
-        try {
-          const res = await fetch(ENDPOINT, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              turno: selettoreTurno.value,
-              risposta: campo.value,
-            }),
-          });
-          const testo = await res.text();
-          // Mostriamo il JSON così com'è arrivato dal server (verbatim dal modello).
-          output.textContent = testo;
-        } catch (err) {
-          output.classList.add("errore");
-          output.textContent =
-            "Errore di rete: il server è avviato su http://localhost:3000? (" + err.message + ")";
-        } finally {
-          bottone.disabled = false;
+      // --- Riferimenti UI ---
+      const chat = document.getElementById("chat");
+      const azione = document.getElementById("azione");
+
+      // --- Helper conversazione --------------------------------------------
+
+      // Aggiunge un elemento alla chat e scorre in fondo.
+      function appendiInChat(el) {
+        chat.appendChild(el);
+        chat.scrollTop = chat.scrollHeight;
+        return el;
+      }
+
+      // Bolla di testo (assistente o utente).
+      function aggiungiBolla(testo, classe) {
+        const div = document.createElement("div");
+        div.className = "bolla " + classe;
+        div.textContent = testo;
+        return appendiInChat(div);
+      }
+      const aiDice = (testo) => aggiungiBolla(testo, "ai");
+      const utenteDice = (testo) => aggiungiBolla(testo, "utente");
+
+      // Scheda con campi etichettati (per le voci-oggetto: esperienze, formazione).
+      // righe = [{ etichetta, valore }]. Valore vuoto → "(non specificata)".
+      function schedaCampi(titolo, righe) {
+        const div = document.createElement("div");
+        div.className = "scheda";
+        if (titolo) {
+          const h = document.createElement("h4");
+          h.textContent = titolo;
+          div.appendChild(h);
         }
-      });
+        const ul = document.createElement("ul");
+        for (const r of righe) {
+          const li = document.createElement("li");
+          if (r.valore) {
+            li.textContent = r.etichetta + ": " + r.valore;
+          } else {
+            li.textContent = r.etichetta + ": ";
+            const span = document.createElement("span");
+            span.className = "vuoto";
+            span.textContent = "(non specificata)";
+            li.appendChild(span);
+          }
+          ul.appendChild(li);
+        }
+        div.appendChild(ul);
+        return appendiInChat(div);
+      }
+
+      // Scheda a lista nuda (per le competenze e per parti del riepilogo).
+      function schedaLista(titolo, elementi) {
+        const div = document.createElement("div");
+        div.className = "scheda";
+        if (titolo) {
+          const h = document.createElement("h4");
+          h.textContent = titolo;
+          div.appendChild(h);
+        }
+        const ul = document.createElement("ul");
+        for (const e of elementi) {
+          const li = document.createElement("li");
+          li.textContent = e;
+          ul.appendChild(li);
+        }
+        div.appendChild(ul);
+        return appendiInChat(div);
+      }
+
+      // Svuota l'area di interazione (prima di mostrare testo o bottoni).
+      function pulisciAzione() {
+        azione.innerHTML = "";
+      }
+
+      // Mostra una casella di testo + Invia; chiama onInvia(testo) al clic.
+      function chiediTesto(placeholder, onInvia) {
+        pulisciAzione();
+        const ta = document.createElement("textarea");
+        ta.placeholder = placeholder || "Scrivi qui la tua risposta…";
+
+        const btn = document.createElement("button");
+        btn.className = "primario";
+        btn.textContent = "Invia";
+
+        const fila = document.createElement("div");
+        fila.className = "fila-invia";
+        fila.appendChild(btn);
+
+        azione.appendChild(ta);
+        azione.appendChild(fila);
+        ta.focus();
+
+        const invia = () => {
+          const testo = ta.value.trim();
+          if (!testo) return;
+          pulisciAzione();
+          onInvia(testo);
+        };
+        btn.addEventListener("click", invia);
+        // Invio con Ctrl/Cmd+Enter, per comodità.
+        ta.addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === "Enter") invia();
+        });
+      }
+
+      // Mostra una fila di bottoni. `scelte` = [{ etichetta, primario?, onClick }].
+      function chiediScelta(scelte) {
+        pulisciAzione();
+        const cont = document.createElement("div");
+        cont.className = "bottoni";
+        for (const s of scelte) {
+          const btn = document.createElement("button");
+          btn.textContent = s.etichetta;
+          if (s.primario) btn.className = "primario";
+          btn.addEventListener("click", () => {
+            pulisciAzione();
+            s.onClick();
+          });
+          cont.appendChild(btn);
+        }
+        azione.appendChild(cont);
+      }
+
+      // --- Ponte verso il server -------------------------------------------
+
+      // Toglie eventuali fence markdown ```json ... ``` attorno al JSON e
+      // restituisce l'oggetto. Il modello a volte avvolge la risposta.
+      function estraiFrammento(testoGrezzo) {
+        let t = testoGrezzo.trim();
+        if (t.startsWith("```")) {
+          t = t.replace(/^```[a-zA-Z]*\s*/, "").replace(/\s*```$/, "").trim();
+        }
+        return JSON.parse(t);
+      }
+
+      // Manda { turno, risposta } al server e restituisce il frammento (oggetto).
+      async function strutturaTurno(turno, risposta) {
+        const res = await fetch(ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ turno, risposta }),
+        });
+        const testo = await res.text();
+        if (!res.ok) throw new Error("Risposta server non valida: " + testo);
+        return estraiFrammento(testo);
+      }
+
+      // Mostra "sto leggendo…", chiama il server, e restituisce il frammento
+      // (o null in caso di errore, già segnalato in chat).
+      async function chiamaConAttesa(chiave, risposta) {
+        const inAttesa = aiDice("Un attimo, sto leggendo…");
+        try {
+          const fr = await strutturaTurno(chiave, risposta);
+          inAttesa.remove();
+          return fr;
+        } catch (err) {
+          inAttesa.textContent =
+            "Ho avuto un problema a contattare il server (è avviato su localhost:3000?). Riprova.";
+          inAttesa.classList.add("errore");
+          return null;
+        }
+      }
+
+      // --- Definizione dei turni (ordine e comportamento) ------------------
+
+      const TURNI = [
+        {
+          chiave: "nome",
+          tipo: "singolo",
+          apertura:
+            "Ciao!\n" +
+            "Ti chiederò sia le esperienze formali (lavori, studi, corsi), sia quelle informali " +
+            "(cose fatte per amici, famiglia, passioni): contano entrambe.\n" +
+            "Useremo le tue risposte — solo quelle — per preparare un CV su misura.\n\n" +
+            "Per iniziare: come ti chiami?",
+          mostraScheda(fr) {
+            if (fr.nome) aiDice("Ho capito che ti chiami: " + fr.nome + ".");
+            else aiDice("Non ho colto un nome nella tua risposta.");
+          },
+          unisci(fr) {
+            profilo.nome = fr.nome || "";
+          },
+        },
+        {
+          chiave: "esperienze_formali",
+          tipo: "ripetibile",
+          apertura:
+            "Partiamo dalle esperienze di lavoro vere e proprie: raccontamele con parole tue, come vengono. " +
+            "Gli studi e i corsi li vediamo dopo.\n" +
+            "Procediamo un lavoro alla volta.\n\n" +
+            "* Qual è il primo che ti viene in mente?",
+          riapertura: "Raccontami la prossima.",
+          ponte: "Hai un'altra esperienza di lavoro da raccontarmi, o procediamo?",
+          testoVuoto: "Non ho colto un'esperienza di lavoro in quello che hai scritto.",
+          campi: [
+            { chiave: "ruolo", etichetta: "Ruolo" },
+            { chiave: "azienda", etichetta: "Azienda" },
+            { chiave: "durata", etichetta: "Durata" },
+            { chiave: "cosa_facevo", etichetta: "Cosa facevo" },
+          ],
+        },
+        {
+          chiave: "esperienze_informali",
+          tipo: "ripetibile",
+          apertura:
+            "Raccontami ora le esperienze informali: cose fatte senza che fossero un lavoro vero e proprio — " +
+            "aiutare un familiare con la sua attività, dare una mano in associazioni o eventi, " +
+            "una passione che ti ha insegnato qualcosa. Non c'è bisogno che sia \"importante\".\n\n" +
+            "* Ti viene in mente qualcosa del genere?",
+          riapertura: "Raccontami la prossima.",
+          ponte: "Hai un'altra esperienza informale, o procediamo?",
+          testoVuoto: "Non ho colto un'esperienza informale in quello che hai scritto.",
+          campi: [
+            { chiave: "cosa_facevo", etichetta: "Cosa facevo" },
+            { chiave: "quando", etichetta: "Quando" },
+            { chiave: "con_chi", etichetta: "Con chi" },
+          ],
+        },
+        {
+          chiave: "competenze",
+          tipo: "blocco",
+          apertura:
+            "Passiamo alle competenze, cioè le cose che sai fare.\n" +
+            "Pensa a quello che mi hai raccontato finora — i lavori, le esperienze. " +
+            "Da tutto questo, cosa ti senti di saper fare? Anche cose pratiche e concrete.\n\n" +
+            "* Cosa ti riesce bene?",
+          testoVuoto: "Non ho colto competenze in quello che hai scritto.",
+        },
+        {
+          chiave: "formazione",
+          tipo: "ripetibile",
+          apertura:
+            "Siamo all'ultimo campo: gli studi e i corsi. Diplomi, qualifiche, corsi di formazione — " +
+            "tutto quello che hai studiato o imparato in modo strutturato.\n" +
+            "Procediamo come prima, uno alla volta.\n\n" +
+            "* Qual è il primo che ti viene in mente?",
+          riapertura: "Raccontami la prossima.",
+          ponte: "Hai un'altra esperienza di studio o formazione, o abbiamo finito?",
+          testoVuoto: "Non ho colto un titolo di studio o un corso in quello che hai scritto.",
+          campi: [
+            { chiave: "titolo", etichetta: "Titolo" },
+            { chiave: "istituto", etichetta: "Istituto" },
+            { chiave: "anno", etichetta: "Anno" },
+          ],
+        },
+      ];
+
+      const trovaTurno = (chiave) => TURNI.find((t) => t.chiave === chiave);
+
+      // --- Macchina del dialogo --------------------------------------------
+
+      let indiceTurno = 0;
+
+      function avviaProssimoTurno() {
+        if (indiceTurno >= TURNI.length) return chiudiDialogo();
+        const turno = TURNI[indiceTurno];
+        aiDice(turno.apertura);
+        switch (turno.tipo) {
+          case "singolo":
+            return gestisciSingolo(turno);
+          case "ripetibile":
+            return gestisciRipetibile(turno);
+          case "blocco":
+            return gestisciBlocco(turno);
+        }
+      }
+
+      function passaAlProssimo() {
+        indiceTurno++;
+        avviaProssimoTurno();
+      }
+
+      // Turno "singolo": una risposta → scheda → conferma → avanti.
+      function gestisciSingolo(turno) {
+        chiediTesto("La tua risposta…", async (risposta) => {
+          utenteDice(risposta);
+          const fr = await chiamaConAttesa(turno.chiave, risposta);
+          if (!fr) return gestisciSingolo(turno);
+          turno.mostraScheda(fr);
+          chiediScelta([
+            {
+              etichetta: "Sì, è giusto",
+              primario: true,
+              onClick: () => {
+                turno.unisci(fr);
+                passaAlProssimo();
+              },
+            },
+            {
+              etichetta: "Correggi",
+              onClick: () => {
+                aiDice("Va bene, riscrivimela come viene.");
+                gestisciSingolo(turno);
+              },
+            },
+          ]);
+        });
+      }
+
+      // Mostra la scheda di conferma in blocco per una lista di voci-oggetto.
+      function mostraVoci(turno, voci) {
+        aiDice("Ecco cosa ho capito:");
+        for (const voce of voci) {
+          const righe = turno.campi.map((c) => ({
+            etichetta: c.etichetta,
+            valore: (voce[c.chiave] || "").trim(),
+          }));
+          schedaCampi(null, righe);
+        }
+      }
+
+      // Turno "ripetibile": lista di voci, conferma in blocco, poi loop
+      // "altro o procediamo?".
+      function gestisciRipetibile(turno) {
+        chiediTesto("La tua risposta…", async (risposta) => {
+          utenteDice(risposta);
+          const fr = await chiamaConAttesa(turno.chiave, risposta);
+          if (!fr) return gestisciRipetibile(turno);
+
+          const voci = fr[turno.chiave] || [];
+          if (voci.length === 0) {
+            aiDice(turno.testoVuoto);
+            chiediScelta([
+              {
+                etichetta: "Riprovo",
+                primario: true,
+                onClick: () => {
+                  aiDice("Va bene, raccontamela come viene.");
+                  gestisciRipetibile(turno);
+                },
+              },
+              { etichetta: "Passiamo oltre", onClick: passaAlProssimo },
+            ]);
+            return;
+          }
+
+          mostraVoci(turno, voci);
+          chiediScelta([
+            {
+              etichetta: "Sì, è giusto",
+              primario: true,
+              onClick: () => {
+                profilo[turno.chiave].push(...voci);
+                chiediAltro(turno);
+              },
+            },
+            {
+              etichetta: "Correggi",
+              onClick: () => {
+                aiDice("Va bene, raccontamela di nuovo.");
+                gestisciRipetibile(turno);
+              },
+            },
+          ]);
+        });
+      }
+
+      // Reminder-ponte dei turni ripetibili: un'altra voce o avanti.
+      function chiediAltro(turno) {
+        aiDice("Perfetto, segnata.\n\n" + turno.ponte);
+        chiediScelta([
+          {
+            etichetta: "Ne ho un'altra",
+            primario: true,
+            onClick: () => {
+              aiDice(turno.riapertura);
+              gestisciRipetibile(turno);
+            },
+          },
+          { etichetta: "Procediamo", onClick: passaAlProssimo },
+        ]);
+      }
+
+      // Turno "blocco" (competenze): raccolta in blocco + un solo giro di aggiunta.
+      function gestisciBlocco(turno) {
+        chiediTesto("La tua risposta…", async (risposta) => {
+          utenteDice(risposta);
+          const fr = await chiamaConAttesa(turno.chiave, risposta);
+          if (!fr) return gestisciBlocco(turno);
+
+          const voci = fr[turno.chiave] || [];
+          if (voci.length === 0 && profilo[turno.chiave].length === 0) {
+            aiDice(turno.testoVuoto);
+            chiediScelta([
+              {
+                etichetta: "Riprovo",
+                primario: true,
+                onClick: () => {
+                  aiDice("Va bene, cosa ti riesce bene?");
+                  gestisciBlocco(turno);
+                },
+              },
+              { etichetta: "Passiamo oltre", onClick: passaAlProssimo },
+            ]);
+            return;
+          }
+
+          profilo[turno.chiave].push(...voci);
+          mostraCompetenze();
+          chiediScelta([
+            {
+              etichetta: "Ne aggiungo altre",
+              onClick: () => {
+                aiDice("Dimmi pure cosa aggiungere.");
+                aggiungiCompetenzeUnGiro(turno);
+              },
+            },
+            { etichetta: "Vanno bene", primario: true, onClick: passaAlProssimo },
+          ]);
+        });
+      }
+
+      // Un solo giro di aggiunta competenze, poi si chiude (niente secondo giro).
+      function aggiungiCompetenzeUnGiro(turno) {
+        chiediTesto("Cosa vuoi aggiungere…", async (risposta) => {
+          utenteDice(risposta);
+          const fr = await chiamaConAttesa(turno.chiave, risposta);
+          if (!fr) return aggiungiCompetenzeUnGiro(turno);
+          profilo[turno.chiave].push(...(fr[turno.chiave] || []));
+          mostraCompetenze();
+          chiediScelta([
+            { etichetta: "Confermiamo", primario: true, onClick: passaAlProssimo },
+          ]);
+        });
+      }
+
+      function mostraCompetenze() {
+        aiDice("Ecco cosa ho capito — le cose che sai fare:");
+        schedaLista(null, profilo.competenze);
+      }
+
+      // --- Chiusura: riepilogo leggibile del profilo -----------------------
+
+      function chiudiDialogo() {
+        aiDice(
+          "Perfetto, abbiamo finito di costruire il tuo profilo.\n" +
+            "Ecco un riepilogo di quello che ho raccolto:"
+        );
+
+        schedaLista("Nome", [profilo.nome || "(non indicato)"]);
+        riepilogoSezione("Esperienze formali", "esperienze_formali");
+        riepilogoSezione("Esperienze informali", "esperienze_informali");
+        schedaLista(
+          "Competenze",
+          profilo.competenze.length ? profilo.competenze : ["(nessuna indicata)"]
+        );
+        riepilogoSezione("Formazione", "formazione");
+
+        aiDice(
+          "Userò soltanto queste informazioni — niente di inventato — per aiutarti a " +
+            "preparare CV e lettere su misura quando avrai un annuncio che ti interessa."
+        );
+
+        // Comodo in fase di sviluppo: il profilo completo in console.
+        console.log("Profilo raccolto:", profilo);
+      }
+
+      // Riepiloga una sezione a voci-oggetto (una scheda per voce).
+      function riepilogoSezione(titolo, chiave) {
+        const voci = profilo[chiave];
+        if (!voci.length) {
+          schedaLista(titolo, ["(nessuna indicata)"]);
+          return;
+        }
+        const turno = trovaTurno(chiave);
+        voci.forEach((voce, i) => {
+          const righe = turno.campi.map((c) => ({
+            etichetta: c.etichetta,
+            valore: (voce[c.chiave] || "").trim(),
+          }));
+          schedaCampi(titolo + " " + (i + 1), righe);
+        });
+      }
+
+      // --- Avvio -----------------------------------------------------------
+      avviaProssimoTurno();
     </script>
   </body>
 </html>
