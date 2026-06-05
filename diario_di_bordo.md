@@ -502,3 +502,36 @@ Che Claude Code, se non lo sorvegli, "deriva". In questa sessione l'ho colto su 
 💡 *Mia intuizione / scelta ragionata* — La fusione dei due "Claude" in uno solo non cambia il mio ruolo: resto il regista. Anzi, lo rende più impegnativo, perché senza la tappa intermedia di Claude chat sono io l'unico filtro tra la proposta e il codice. Lavorare bene con Claude Code è meno "fare domande" e più "saper verificare".
 
 💡 *Mia intuizione / scelta ragionata* — Far auto-verificare Claude Code (controlli automatici sui file, confronto prompt-codice carattere per carattere) è diventato parte del metodo: non mi fido di "fatto", chiedo la prova. È la versione operativa del "verifico con i miei occhi" dello Step 0.3.
+
+### Step 1.10 — Anello 2: progettazione dell'analisi annuncio (schema, prompt e studio dello stato dell'arte)
+
+*Primo passo del secondo anello della pipeline: dato il testo di un annuncio di lavoro, ricavarne una versione strutturata. Ho progettato schema e prompt da zero, poi ho studiato i migliori estrattori open-source per validare e affinare le mie scelte — imparando, non copiando.*
+
+**Cosa ho fatto**
+Progettato lo schema dell'annuncio e il prompt di estrazione, su un branch dedicato, in più tappe con un commit a ogni decisione chiusa. Poi ho fatto fare a Claude Code una ricerca mirata sui migliori estrattori open-source su GitHub, restringendo super-selettivamente fino al progetto più calzante (`amazon-science/job-posting-structure`), e ho usato le sue lezioni per affinare il nostro prompt — riscrivendo tutto con parole mie, mai copiando.
+
+**Cosa ho imparato**
+- La differenza tra "estrarre da file" (PDF, OCR, NER addestrato) e "strutturare testo con un prompt LLM": sono problemi diversi, e il nostro è il secondo. Questo ha cambiato quali progetti erano davvero rilevanti — i classici "resume parser" risolvono un problema che noi non abbiamo.
+- Il principio idea/espressione del diritto d'autore: si possono assimilare i *concetti* altrui, non la loro forma. "Imparo, non incollo" non è solo etica, è anche il percorso legalmente sicuro (il copyright tutela l'espressione, non le idee).
+- Validare le proprie scelte contro lo stato dell'arte dà fiducia: i tool migliori, indipendentemente da noi, fanno ciò che avevamo già deciso (required/preferred, "non menzionato → vuoto", scarto degli input che non sono annunci).
+
+**Dove ho faticato / cosa non era ovvio**
+- I "due secchi" di Amazon (requisiti `required` vs `preferred`) sembravano un upgrade, ma per il nostro caso erano un downgrade: perdono il terzo stato "non specificata" che a noi serve per non inventare. Capirlo non era ovvio.
+- Tenere il filo lungo dello studio senza disperdermi: il panorama era pieno di progetti simili ma non centrati, e ho dovuto più volte chiedere di restringere ("super-selettivo") per arrivare a ciò che ci serviva davvero.
+
+**Cosa ho deciso e perché**
+- **Schema a due zone**: un *nucleo confrontabile* col profilo (`competenze_richieste`, `esperienza_richiesta`, `formazione_richiesta`) e dei *campi di contesto* (`titolo`, `sede`, `contratto`, `mansioni`, `benefit`). Il nucleo deve "rispecchiare" il profilo, perché è ciò che renderà possibile il match dell'anello 3.
+- **Priorità a tre valori** (`richiesto` / `preferenziale` / `non specificata`), assegnata **solo se l'annuncio lo dichiara esplicitamente**; altrimenti `non specificata` (default sicuro, niente invenzione).
+- **`contratto` come sotto-oggetto** (tipo, durata, orario, retribuzione), riempito solo per ciò che l'annuncio dichiara; **`sede` come lista** (un annuncio può avere più sedi); **`mansioni` e `benefit`** come campi di contesto distinti (cosa si farà vs extra oltre la paga).
+- **Prompt unico per l'MVP**, non decomposto, ma diviso in **5 sezioni numerate** pensate come futuri sotto-prompt: la via decomposta (più prompt separati) è più potente ma avanzata, la rimando preparando però il terreno.
+- **Tenere il nostro "priorità per-voce" invece dei "due secchi"**: i due secchi costringono a una scelta binaria che diventa invenzione quando l'annuncio non qualifica un requisito; il nostro modo, con tre stati, resta fedele. Ho però assimilato il *pensiero* dei due secchi come guida nel prompt ("ragiona a secchi") — il bene della loro idea senza la loro rigidità.
+- **Anni di esperienza come ibrido**: `anni` come numero quando l'annuncio lo indica, `testo` sempre con la frase; e quando non serve esperienza l'output è la voce "Nessuna esperienza richiesta".
+- **Niente flag booleani** (remote, full_time, ecc.): ridondanti con `sede`/`contratto`, sarebbero "pomposi". **Niente salary/wage separati**: è una distinzione USA; teniamo la retribuzione come la descrive l'annuncio.
+- **Taxonomy mapping**: tecnica nuova trovata nello studio (mappare le skill su una tassonomia ESCO/O*NET). Potentissima per il **match (anello 3)**, ma in tensione con l'anti-invenzione in fase di estrazione → l'ho messa in memoria per riprenderla all'anello 3, con tanto di fonti.
+- **Vincolo legale chiarito**: assimiliamo i concetti, non copiamo codice/testo/tassonomia altrui (`amazon-science/job-posting-structure` è CC BY-NC-SA, uso non commerciale).
+
+💡 *Mia intuizione / scelta ragionata* — Validare *prima* di costruire: ho voluto cercare lo stato dell'arte prima di sfoderare le energie sull'implementazione, per non innamorarmi di una soluzione senza aver guardato come fanno i migliori. È costato tempo, ma mi ha dato sia conferme sia idee.
+
+💡 *Mia intuizione / scelta ragionata* — Il design giusto dipende dall'uso, non dall'autorevolezza della fonte. Ho tenuto la nostra scelta contro quella di un colosso come Amazon perché il nostro contesto è opposto al loro: loro misurano statistiche su milioni di annunci (forzare in due secchi va bene), noi rappresentiamo fedelmente un singolo annuncio per un singolo utente (la fedeltà conta più della pulizia aggregata).
+
+💡 *Mia intuizione / scelta ragionata* — Preparare il futuro senza pagarlo ora: prompt unico per l'MVP, ma a sezioni nette, così quando lo spezzetterò in più prompt separati la strada sarà già tracciata.

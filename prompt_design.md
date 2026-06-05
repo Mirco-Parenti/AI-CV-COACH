@@ -546,3 +546,7 @@ scelto così — vive nel `diario_di_bordo.md`, ai passi indicati.
 **6. Scoring incoerente della "famiglia A"** *(anello 3, futuro)*.
 - *Mitigazione:* punteggio presentato come orientativo + farlo giustificare elencando i requisiti soddisfatti/non soddisfatti.
 - *Narrazione:* research_notes progetti 2–3; diario Step 0.5.
+
+**7. Requisiti "tipici" non scritti aggiunti all'annuncio** *(anello 2, il gemello del gonfiamento)*.
+- *Mitigazione:* si estrae solo ciò che l'annuncio dichiara; priorità assegnata solo se esplicita; campi mancanti vuoti.
+- *Narrazione:* diario Step 1.10; sezione "Analisi annuncio di lavoro".
