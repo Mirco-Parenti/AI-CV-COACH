@@ -434,3 +434,27 @@ Allo Step 1.5 avevo motivato la scelta dell'aiutante Node dicendo che "l'app è 
 💡 *Mia intuizione / scelta ragionata* — Trattare l'aiutante Node come "impalcatura da cantiere" è economia, non pigrizia: studiarne il codice sarebbe tempo sprecato, visto che alla migrazione verrà smontato. Metto l'attenzione dove resta valore (il dialogo), non dove verrà buttato.
 
 💡 *Mia intuizione / scelta ragionata* — La migrazione HTML→VB.NET non mi spaventa più da quando ho capito il confine tra "faccia" e "motore": butterò solo il frontend HTML e l'aiutante Node, mentre il cuore del progetto (dialogo, prompt, schema, anti-invenzione) resta. Non butto via tutto, butto via l'impalcatura.
+
+### Step 1.8 — Orchestrazione del dialogo nel front-end (anello 1 completo end-to-end)
+
+*I cinque turni, prima isolati, ora si concatenano in un'unica conversazione che riempie il profilo. Primo anello della pipeline funzionalmente completo.*
+
+**Cosa ho fatto**
+Trasformato la test-page in un dialogo guidato vero. Ho fatto costruire i cinque turni dell'orchestrazione uno alla volta, decidendo io per ciascuno lo stile di raccolta dati (più campi per esperienze e formazione, stringa singola in lista per le competenze, ecc.), lo stile di ripetizione della domanda e il comportamento sui campi che l'IA non capisce (restano vuoti). Il dialogo parte dal nome, percorre i cinque turni nell'ordine fisso, mostra le schede di conferma, gestisce Sì/Correggi, fa il loop "altro o procediamo?", raccoglie le competenze in blocco e chiude con un riepilogo leggibile del profilo. Lavorato sul branch `step-3-orchestrazione-frontend` (commit `36e3ed6`); il merge in `main` lo faccio a step chiuso.
+
+**Cosa ho imparato**
+- La distinzione tra come il profilo *vive* e come lo *mostro*: dentro il programma il profilo è un oggetto JSON (formato tecnico, con graffe e virgolette); all'utente lo presento come riepilogo leggibile (box con etichette). Stesso dato, due forme — la stessa distinzione "nome tecnico vs testo visibile" dello Step 1.1, applicata all'intero profilo invece che al singolo campo.
+- Concatenare turni che funzionano da soli non è automatico: serve uno "stato" unico (il profilo) che cresce di turno in turno e un motore che sa quale turno viene dopo. I turni isolati erano i mattoni; l'orchestrazione è la malta.
+
+**Dove ho faticato / cosa non era ovvio**
+Rispetto allo Step 1.7 ho tenuto un ritmo più stretto: invece di validare un blocco già fatto, ho fatto costruire e impostare ogni turno uno alla volta, decidendo io le opzioni di ciascuno prima di passare al successivo. È costato più tempo, ma mi ha tenuto il controllo del design — ho capito che con Claude Code il "uno alla volta" non è lentezza inutile, è il modo in cui resto io a decidere la forma.
+
+**Cosa ho deciso e perché**
+- Conferma in blocco confermata sul campo: se in un turno-lista racconto più voci insieme, la scheda le mostra tutte (un box per voce) e le confermo in un colpo solo, non una per una. Coerente con la natura dei campi-lista (Step 1.4).
+- Riepilogo finale leggibile, non JSON grezzo: la chiusura mostra il profilo in forma umana (box con etichette, vuoti come `(non specificata)`). Chiude il "sospeso" dello Step 1.4 sul formato del riepilogo: il JSON resta forma interna (visibile in console per il debug), l'utente vede il riepilogo leggibile.
+- Tre rifiniture lasciate fuori per scelta MVP: rimozione di singole competenze (c'è solo l'aggiunta), routing a linguaggio naturale (si usano i bottoni), editing campo-per-campo. Il design le prevede; le rimando.
+- I quattro prompt di strutturazione diversi da `nome` restano provvisori in `server.js`: andranno in `prompt_design.md` solo da definitivi.
+
+💡 *Mia intuizione / scelta ragionata* — L'anello 1 (raccolta del profilo via dialogo) è il pezzo distintivo e raro del progetto, ed è il primo a diventare funzionante end-to-end. Tenere il ritmo "un turno alla volta, decido io" proprio su questo anello è stato giusto: è il cuore originale di AI-CV-COACH, il punto dove non valeva la pena delegare le scelte di forma.
+
+💡 *Mia intuizione / scelta ragionata* — Il riepilogo leggibile non è "il JSON vestito bene": è il confine tra il sistema e la persona. Il programma lavora in JSON perché gli serve preciso e confrontabile; l'utente vede il riepilogo perché gli serve comprensibile. Tenere le due forme separate è la stessa disciplina anti-invenzione di sempre — ogni cosa nel formato giusto per chi la usa.
