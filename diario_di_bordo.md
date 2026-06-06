@@ -582,3 +582,26 @@ La regola "astratta" non bastava: avevo scritto "in dubbio non marcare richiesto
 💡 *Mia intuizione / scelta ragionata* — "Comprendere il senso oltre il testo" non contraddice l'anti-invenzione: non aggiungo requisiti che non ci sono (quello resta vietato), ma *interpreto correttamente la priorità* di quelli che ci sono. Estrarre solo il vero, sì; ma del vero capirne il peso.
 
 💡 *Mia intuizione / scelta ragionata* — Il collaudo su input reali vale più di mille regole a tavolino: la rifinitura della priorità non l'avrei trovata leggendo il prompt, l'ho vista solo guardando cosa usciva da un annuncio vero.
+
+### Step 1.13 — Casi limite dal campo: precedenza testo-su-sezione e il campo "altri_requisiti"
+
+*Due annunci reali hanno fatto emergere due limiti dell'estrazione, entrambi corretti: la priorità che si fa ingannare dalle sezioni, e i requisiti che non rientrano in nessuna delle tre dimensioni.*
+
+**Cosa ho fatto**
+Testati altri annunci reali e analizzato l'output voce per voce. Da un annuncio per contabile sono usciti due problemi, che ho sistemato nel prompt (in `prompt_design.md` e `server.js`, tenuti identici) e ri-validato sul campo.
+
+**Cosa ho imparato / deciso — i due casi**
+- **Precedenza del testo sulla sezione (priorità).** L'annuncio scriveva "PROFIS - plus la conoscenza" *fuori* da una sezione "Requisiti preferenziali" presente altrove. Il modello, fidandosi della struttura, l'aveva messo `richiesto`. Ma "plus" dice che è facoltativo → `preferenziale`. Ho aggiunto una **regola di precedenza**: il segnale testuale della singola voce vince sul contesto della sezione. E ho precisato che "plus" è solo *uno dei tanti* segnali: il modello deve riconoscere il senso ("vantaggio gradito ma non obbligatorio"), non spuntare parole da una lista chiusa. Più un esempio concreto (PROFIS) nel prompt.
+- **Il nuovo campo `altri_requisiti`.** Lo stesso annuncio aveva, tra i preferenziali, "Domicilio in zona limitrofa allo Studio" — sparito dall'output, perché non è una competenza, un'esperienza o un titolo, e lo schema non aveva un posto per i requisiti di altra natura. Ho aggiunto `altri_requisiti` (lista di `{ testo, priorita }`) per domicilio, disponibilità (turni/weekend/trasferte), patente, automunito, età, iscrizione a un albo, idoneità: cose che il candidato deve soddisfare ma che non si confrontano col profilo.
+
+**Dove ho faticato / cosa non era ovvio**
+Il secondo problema non l'avevo notato a occhio: l'ho trovato applicando il **riflesso anti-omissione** che avevamo deciso ("a ogni controllo chiediti: sto dimenticando qualcosa?"). Confrontando l'output con l'annuncio riga per riga, è saltato fuori che un requisito esplicito era stato silenziosamente scartato. Quel riflesso non è formalità: trova cose vere.
+
+**Cosa ho deciso e perché**
+- Priorità: il **senso e il testo della singola voce** vengono prima della sezione; "plus"/attenuanti riconosciuti per significato, non per parole esatte.
+- Schema: quattro tipi di requisito (i tre confrontabili + `altri_requisiti` non confrontabile), con la regola anti-duplicazione aggiornata.
+- Validato sul campo: PROFIS → `preferenziale`, domicilio → `altri_requisiti`, nessuna regressione sui casi già buoni.
+
+💡 *Mia intuizione / scelta ragionata* — Gli annunci veri sono una miniera di casi limite che a tavolino non immagini (un "plus" fuori posto, un domicilio tra i requisiti). Ogni annuncio nuovo affina la regola: la qualità del prompt si costruisce sul campo, un caso alla volta.
+
+💡 *Mia intuizione / scelta ragionata* — "Comprendere il senso oltre il testo" e "verificare anche testualmente" non si contraddicono: vanno insieme. Leggo il significato (PROFIS è un plus → facoltativo) e insieme controllo che nessuna parola dell'annuncio sia andata persa (il domicilio). Senso e letteralità, non l'uno o l'altro.
