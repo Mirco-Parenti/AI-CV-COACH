@@ -21,7 +21,13 @@ if (!API_KEY) {
 }
 
 const PORT = 3000;
-const MODEL = "claude-haiku-4-5";
+// Due modelli per due livelli di compito:
+// - MODEL_SEMPLICE: task meccanici (strutturare il nome, estrarre l'annuncio).
+//   Haiku 4.5 basta ed è veloce ed economico.
+// - MODEL_RAGIONAMENTO: il confronto semantico profilo-annuncio (anello 3),
+//   che richiede giudizio e ragionamento. Sonnet 4.6 dà risposte migliori.
+const MODEL_SEMPLICE = "claude-haiku-4-5";
+const MODEL_RAGIONAMENTO = "claude-sonnet-4-6";
 // 1500 token: l'estrazione dell'annuncio (schema completo) è più lunga dei
 // frammenti del profilo. Per i turni del profilo è solo headroom: il modello
 // produce poco e si ferma da sé.
@@ -380,7 +386,7 @@ function calcolaMatch(giudizi, numeroComplessivo) {
 
 // Chiama l'API di Anthropic con un prompt già costruito e restituisce il testo
 // prodotto dal modello.
-async function chiamaAnthropic(prompt, maxTokens = MAX_TOKENS) {
+async function chiamaAnthropic(prompt, maxTokens = MAX_TOKENS, model = MODEL_SEMPLICE) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -389,7 +395,7 @@ async function chiamaAnthropic(prompt, maxTokens = MAX_TOKENS) {
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: MODEL,
+      model,
       max_tokens: maxTokens,
       messages: [{ role: "user", content: prompt }],
     }),
@@ -479,7 +485,7 @@ async function gestisciConfronta(body, res) {
   try {
     // Giro 1 — l'LLM giudica voce per voce.
     const prompt = promptConfronto(profilo, annuncio);
-    const testoModello = await chiamaAnthropic(prompt, MAX_TOKENS_CONFRONTO);
+    const testoModello = await chiamaAnthropic(prompt, MAX_TOKENS_CONFRONTO, MODEL_RAGIONAMENTO);
 
     let giro1;
     try {

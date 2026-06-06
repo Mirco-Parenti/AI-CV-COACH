@@ -694,3 +694,21 @@ Colonna entry da `[76, 78, 76]` (piatta) a **`[3.6, 3.1, 0.8]`** stelle: buon fi
 💡 *Mia intuizione / scelta ragionata* — `non determinabile` faceva due lavori opposti ("non ho modo di saperlo" e "non l'ha detto") travestiti da uno. Separarli ha sbloccato tutto. Certi bug non sono nel codice ma in un concetto che porta due significati sotto la stessa etichetta.
 
 💡 *Mia intuizione / scelta ragionata* — Avevo puntato il dito sul clamp; il colpevole era la base. I dati hanno detto "il clamp va bene", e gli ho creduto invece di toccarlo per forza. Rivedere non vuol dire per forza cambiare.
+
+### Step 1.18 — Due modelli per due livelli di compito: Haiku per estrarre, Sonnet per ragionare
+
+*Fin qui un solo modello (Haiku 4.5) faceva tutto. Lo sdoppio: i compiti meccanici restano su Haiku, il confronto semantico dell'anello 3 sale a Sonnet 4.6.*
+
+**Cosa ho fatto**
+- In `server.js` ho sostituito l'unica costante `MODEL` con due: `MODEL_SEMPLICE = "claude-haiku-4-5"` e `MODEL_RAGIONAMENTO = "claude-sonnet-4-6"`. La funzione `chiamaAnthropic` ora accetta il modello come terzo parametro (default Haiku).
+- L'estrazione (anello 1 — turni del profilo; anello 2 — analisi annuncio) continua su Haiku. Il confronto (anello 3, `/confronta`) passa esplicitamente `MODEL_RAGIONAMENTO`.
+- Allineata la documentazione: nota "Modelli usati" e richiamo inline nel Giro dell'LLM in `prompt_design.md`, riga "Tecnologie previste" nel `README.md`.
+
+**Cosa ho deciso e perché**
+- **Il modello segue la profondità del compito, non il contrario.** Estrarre nome/requisiti è un compito ristretto a output strutturato: Haiku è veloce ed economico e basta. Il match semantico — cogliere equivalenze ("me la cavo alla cassa" ↔ "uso del registratore di cassa"), pesare requisiti ambigui, leggere l'insieme — è ragionamento vero: lì Sonnet ripaga il costo maggiore.
+- **Default = Haiku, ragionamento = scelta esplicita.** Il default del parametro è Haiku, così ogni nuovo turno di estrazione eredita il modello giusto senza interventi; Sonnet si attiva solo dove serve, passandolo a mano. Una sola leva da ricordare.
+
+**Dove ho faticato / cosa non era ovvio**
+Niente di tecnicamente difficile — un parametro e due costanti. Il punto vero era *dove* tracciare il confine: non "Sonnet ovunque per sicurezza" (costo e lentezza inutili sui compiti meccanici), ma neanche "Haiku ovunque per risparmio" (il match ne soffre). Il confine giusto coincide con quello che il progetto già traccia da sempre: estrazione vs comprensione.
+
+💡 *Mia intuizione / scelta ragionata* — La stessa linea che separa "estrarre fedele al testo" da "comprendere il senso" (la bussola dell'anello 3) separa anche i due modelli. Non è una coincidenza: dove il compito cambia natura, cambia anche lo strumento giusto. Pagare Sonnet sull'estrazione sarebbe sprecare ragionamento dove serve solo precisione.

@@ -14,6 +14,15 @@ Documentare come l'AI viene usata nelle diverse parti del sistema, mantenendo se
 - Rendere verificabile ogni affermazione generata.
 - Presentare il punteggio di match come orientativo.
 
+## Modelli usati (due livelli di compito)
+
+Il sistema usa **due modelli** a seconda della profondità di ragionamento richiesta dal compito (costanti `MODEL_SEMPLICE` e `MODEL_RAGIONAMENTO` in `server.js`):
+
+- **Haiku 4.5** (`claude-haiku-4-5`) — compiti **meccanici di estrazione**: i turni di raccolta profilo (anello 1) e l'analisi dell'annuncio (anello 2). Sono task a compito ristretto e output strutturato: veloce ed economico basta.
+- **Sonnet 4.6** (`claude-sonnet-4-6`) — il **confronto semantico** profilo-annuncio (anello 3, Giro 1). Qui serve giudizio e ragionamento profondo (cogliere equivalenze, pesare requisiti ambigui, leggere l'insieme): il modello più capace ripaga il costo maggiore.
+
+Default = Haiku; il ragionamento profondo si attiva esplicitamente passando `MODEL_RAGIONAMENTO`. Nuovi turni di estrazione ereditano Haiku senza interventi.
+
 ## Struttura dati del profilo utente (schema MVP)
 
 Lo schema dati del profilo e la base condivisa su cui poggia tutta la
@@ -526,7 +535,7 @@ L'anello 3 confronta il profilo (anello 1) con l'annuncio strutturato (anello 2)
 
 **Architettura ibrida: l'LLM comprende, il codice rende consistente.**
 
-- **Giro dell'LLM (comprensione).** Si mette davanti *tutto* — profilo e annuncio per intero — e ragiona con senso e logica su ogni parte, **senza tralasciare niente da nessuna delle due fonti**. Produce tre cose:
+- **Giro dell'LLM (comprensione).** Gira su **Sonnet 4.6** (`MODEL_RAGIONAMENTO`), il modello più capace, perché qui serve ragionamento profondo — a differenza dell'estrazione (anelli 1-2) che usa Haiku 4.5. Si mette davanti *tutto* — profilo e annuncio per intero — e ragiona con senso e logica su ogni parte, **senza tralasciare niente da nessuna delle due fonti**. Produce tre cose:
   1. per ogni voce dell'annuncio — i requisiti del nucleo **e** i campi di contesto — un **giudizio strutturato** `{ requisito, categoria, priorita, importanza, esito: soddisfatto / in parte / non soddisfatto / non determinabile, spiegazione }`, **confrontato contro il profilo intero** (un requisito di competenza può essere soddisfatto da un'esperienza dichiarata, non solo dalla lista competenze);
   2. una **lettura d'insieme testuale** che tira le somme del match;
   3. un **suo numero complessivo** di match (la sua idea generale).

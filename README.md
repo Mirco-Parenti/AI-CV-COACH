@@ -40,7 +40,7 @@ Il progetto attraversa due fasi tecnologiche distinte.
 
 - Frontend in HTML, CSS e JavaScript, eseguito nel browser.
 - Un aiutante locale in Node.js: utility di servizio che custodisce la chiave API e fa da tramite verso l'API LLM, in modo che la chiave non sia mai esposta nel browser.
-- API di un LLM per la strutturazione del profilo e le elaborazioni.
+- API di un LLM per la strutturazione del profilo e le elaborazioni, con due modelli scelti per livello di compito: **Claude Haiku 4.5** per l'estrazione (profilo e annuncio) e **Claude Sonnet 4.6** per il confronto semantico profilo-annuncio, che richiede ragionamento più profondo.
 
 **Fase target (dopo la validazione di prompt e schema):**
 
