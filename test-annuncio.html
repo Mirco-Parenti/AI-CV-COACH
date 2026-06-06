@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test — Analisi annuncio</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 760px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+      }
+      h1 { font-size: 1.2rem; }
+      textarea {
+        width: 100%;
+        min-height: 12rem;
+        font: inherit;
+        padding: 0.6rem;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      button {
+        margin-top: 0.75rem;
+        padding: 0.5rem 1.1rem;
+        font: inherit;
+        cursor: pointer;
+        border: 1px solid #3a7bc0;
+        border-radius: 6px;
+        background: #4a90d9;
+        color: #fff;
+      }
+      button:disabled { cursor: default; opacity: 0.6; }
+      pre {
+        background: #f4f4f4;
+        padding: 1rem;
+        border-radius: 6px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        min-height: 1.5rem;
+      }
+      .errore { color: #b00020; }
+    </style>
+  </head>
+  <body>
+    <h1>Test — <code>analisi_annuncio</code></h1>
+    <p>Incolla il testo di un annuncio di lavoro e premi <em>Analizza</em>: il server lo struttura nello schema dell'anello 2.</p>
+
+    <label for="annuncio">Testo dell'annuncio:</label>
+    <textarea id="annuncio" placeholder="Incolla qui un annuncio di lavoro…"></textarea>
+
+    <button id="analizza">Analizza</button>
+
+    <h2>JSON estratto</h2>
+    <pre id="output"></pre>
+
+    <script>
+      const ENDPOINT = "http://localhost:3000/struttura";
+      const bottone = document.getElementById("analizza");
+      const campo = document.getElementById("annuncio");
+      const output = document.getElementById("output");
+
+      // Toglie eventuali fence markdown ```json ... ``` attorno al JSON.
+      function estraiFrammento(testoGrezzo) {
+        let t = testoGrezzo.trim();
+        if (t.startsWith("```")) {
+          t = t.replace(/^```[a-zA-Z]*\s*/, "").replace(/\s*```$/, "").trim();
+        }
+        return JSON.parse(t);
+      }
+
+      bottone.addEventListener("click", async () => {
+        output.classList.remove("errore");
+        output.textContent = "Attendere…";
+        bottone.disabled = true;
+        try {
+          const res = await fetch(ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ turno: "analisi_annuncio", risposta: campo.value }),
+          });
+          const testo = await res.text();
+          if (!res.ok) throw new Error(testo);
+          // Mostriamo il JSON ri-indentato, dopo il de-fence.
+          const oggetto = estraiFrammento(testo);
+          output.textContent = JSON.stringify(oggetto, null, 2);
+        } catch (err) {
+          output.classList.add("errore");
+          output.textContent =
+            "Errore: il server è avviato su http://localhost:3000? Dettaglio: " + err.message;
+        } finally {
+          bottone.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

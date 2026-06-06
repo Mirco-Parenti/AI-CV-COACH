@@ -535,3 +535,50 @@ Progettato lo schema dell'annuncio e il prompt di estrazione, su un branch dedic
 💡 *Mia intuizione / scelta ragionata* — Il design giusto dipende dall'uso, non dall'autorevolezza della fonte. Ho tenuto la nostra scelta contro quella di un colosso come Amazon perché il nostro contesto è opposto al loro: loro misurano statistiche su milioni di annunci (forzare in due secchi va bene), noi rappresentiamo fedelmente un singolo annuncio per un singolo utente (la fedeltà conta più della pulizia aggregata).
 
 💡 *Mia intuizione / scelta ragionata* — Preparare il futuro senza pagarlo ora: prompt unico per l'MVP, ma a sezioni nette, così quando lo spezzetterò in più prompt separati la strada sarà già tracciata.
+
+### Step 1.11 — Studio sul campo del miglior estrattore di annunci: validazioni e upgrade dei delimitatori
+
+*Ho aperto il cofano del miglior estrattore di annunci open-source (`amazon-science/job-posting-structure`, che usa Claude Haiku come noi): prompt ed esempio reale input→output, per confrontarlo col nostro. Ne escono due conferme forti e un piccolo upgrade.*
+
+**Cosa ho fatto**
+Studiato in profondità il caso che avevo eletto migliore: ho fatto leggere a Claude Code il prompt di estrazione e l'esempio reale (annuncio Amazon "SDE II" → JSON estratto), e li ho confrontati col nostro prompt dell'annuncio. Niente copiato — solo concetti.
+
+**Cosa ho imparato / verificato (le testimonianze)**
+- **Validazione 1 — gli "anni" ibridi.** Il loro output rappresenta l'esperienza come numero ("3+ years" → 3): proprio la scelta che avevamo preso. Conferma.
+- **Validazione 2 (la più importante) — il "leakage" dei due secchi.** Nell'annuncio Amazon il titolo di studio sta SOLO tra i requisiti *preferenziali*, ma nel loro JSON compare ANCHE tra gli *obbligatori* (e l'esperienza "3 anni" viene duplicata nei due secchi). La struttura a due secchi, costringendo a riempire i campi di entrambi, ha indotto il modello a **inventare/duplicare**. È la prova sul campo che la nostra scelta — priorità per-voce con il terzo stato `non specificata` — **evita un errore che persino un tool di livello-ricerca commette**.
+- **Validazione 3 — le skill da tassonomia sono invenzione rispetto al testo.** Le `skills` nel loro output ("Mobile Development", "Leadership"…) non sono nell'annuncio: sono mappate da una tassonomia O*NET. Conferma che il taxonomy mapping va tenuto per il match (anello 3), non per l'estrazione.
+
+**Cosa ho deciso e perché**
+- **Integrato l'unico upgrade utile: i delimitatori a tag.** Avvolgo il testo dell'annuncio tra `<annuncio>` e `</annuncio>` e dico all'AI di trattare ciò che sta lì dentro solo come dato, mai come istruzioni. Più robusto del placeholder tra virgolette, e una piccola difesa contro testi-annuncio che provano a "parlare" al modello.
+- **Confermato tutto il resto senza modifiche:** numeri (anni sì, salary no), niente flag booleani, distinzione mansioni/requisiti già presente, decomposizione e taxonomy/embedding rimandati (post-MVP / anello 3).
+
+💡 *Mia intuizione / scelta ragionata* — Vedere un colosso sbagliare *proprio dove noi abbiamo scelto bene* vale più di mille conferme teoriche: il nostro design "povero" (per-voce, tre stati) batte il loro "ricco" (due secchi) sul nostro terreno, la fedeltà. Non è fortuna: è che abbiamo progettato per il nostro uso, non per il loro.
+
+💡 *Mia intuizione / scelta ragionata* — Studiare lo stato dell'arte non serve solo a copiare il meglio: serve anche a capirne i limiti, e a riconoscere quando una nostra scelta è già superiore. Il valore vero di questo studio è stato più nelle conferme che nelle novità.
+
+### Step 1.12 — Anello 2 dal design al codice: cablaggio, collaudo su annunci reali e la priorità "secondo il senso"
+
+*Primo gesto implementativo dell'anello 2: ho portato il prompt dell'annuncio dal design al codice e l'ho provato su annunci veri. Dal collaudo è nata una rifinitura importante della priorità.*
+
+**Cosa ho fatto**
+Cablato il prompt `analisi_annuncio` nel server (registro `PROMPTS`), alzato `MAX_TOKENS` (l'output dell'annuncio è più lungo dei frammenti del profilo) e creato una piccola pagina di test (`test-annuncio.html`), senza toccare il dialogo (`index.html`). Poi ho incollato annunci reali e guardato cosa estrae.
+
+**Cosa ho imparato — la priorità "secondo il senso"**
+Sul campo è emerso il punto più interessante. All'inizio la regola era "priorità solo se esplicita, altrimenti `non specificata`". Ma un annuncio vero ("Cercasi Montatore Falegname con esperienza", "Titolo di studio: Scuola dell'obbligo") non *scrive* "obbligatorio" — eppure è **palese** che quei requisiti servono. Ho capito che la regola giusta è **comprendere il senso, non solo le parole**:
+- se è palese che un requisito è obbligatorio → `richiesto` (anche senza la parola esplicita);
+- se c'è un attenuante esplicito ("esperienza di basso livello", "anche minima", "gradito") → `preferenziale`;
+- `non specificata` solo quando davvero non si capisce.
+La differenza tra "con esperienza" (palese → `richiesto`) e "con esperienza di basso livello" (attenuante → `preferenziale`) è la presenza di un attenuante.
+
+**Dove ho faticato / cosa non era ovvio**
+La regola "astratta" non bastava: avevo scritto "in dubbio non marcare richiesto", ma il modello — giustamente — leggeva i requisiti palesi come obbligatori. Invece di forzarlo verso `preferenziale` (che sarebbe stato sbagliato), ho cambiato la regola per allinearla al senso. Lezione: a volte è la regola a doversi adeguare al buon senso del modello, non il contrario.
+
+**Cosa ho deciso e perché**
+- **La priorità si valuta dal senso, non solo dalla lettera** (vedi sopra). Tolto il "con esperienza" generico dai preferenziali.
+- **Il prompt vive in due file** — `prompt_design.md` (design) e `server.js` (codice) — tenuti **identici carattere per carattere**, con verifica a ogni modifica. La nota-campo `priorita` invece sta solo nel design.
+- **Collaudo prima di chiudere:** validato su due annunci, uno con requisiti *palesi* e uno con sezioni *esplicite* "Requisiti/Preferenziali" — entrambi corretti.
+- **Campi futuri** (livello, settore) segnati come "da valutare" nel design, non aggiunti ora.
+
+💡 *Mia intuizione / scelta ragionata* — "Comprendere il senso oltre il testo" non contraddice l'anti-invenzione: non aggiungo requisiti che non ci sono (quello resta vietato), ma *interpreto correttamente la priorità* di quelli che ci sono. Estrarre solo il vero, sì; ma del vero capirne il peso.
+
+💡 *Mia intuizione / scelta ragionata* — Il collaudo su input reali vale più di mille regole a tavolino: la rifinitura della priorità non l'avrei trovata leggendo il prompt, l'ho vista solo guardando cosa usciva da un annuncio vero.
