@@ -27,7 +27,7 @@ Difficoltà:
 ### Step 0.2 – GitHub e configurazione Git
 
 Cosa ho fatto:
-- Creato l'account GitHub (username Mirco-Parenti).
+- Creato l'account GitHub (username mirco-parenti).
 - Configurato nome ed email globali di Git.
 - Creato il repository pubblico AI-CV-COACH.
 - Iniziato a usare GitHub Desktop come interfaccia grafica.
@@ -404,7 +404,7 @@ Aprire una scheda col `+` non dà Ubuntu ma il terminale di default (PowerShell)
 **Cosa ho deciso e perché**
 - Architettura con aiutante Node (la chiave dietro un piccolo server locale, non esposta nel browser) invece della via più semplice (chiamata diretta dal browser): l'app è destinata a essere mostrata al pubblico, meglio nascere puliti che rattoppare dopo. Il costo (un pezzo Node in più) è piccolo, perché Node è già installato sulla macchina.
 - `.gitignore` come primissimo gesto, prima di qualunque codice o chiave: la protezione prima dell'oggetto da proteggere.
-- Delegato commit e push a Claude Code, ma a nome mio e con titolo/descrizione decisi da me: prima ho verificato l'identità Git locale (`Mirco-Parenti`) per assicurarmi che il commit uscisse a mio nome e non sotto l'account di Riccardo.
+- Delegato commit e push a Claude Code, ma a nome mio e con titolo/descrizione decisi da me: prima ho verificato l'identità Git locale (`mirco-parenti`) per assicurarmi che il commit uscisse a mio nome e non sotto l'account di Riccardo.
 
 💡 *Mia intuizione / scelta ragionata* — Le due superfici di esposizione (repo vs app in esecuzione) sono il modo giusto per ragionare sulla sicurezza della chiave. Documentare tutto su GitHub, da solo, non bastava a giustificare l'aiutante Node: il repo era già protetto dal `.gitignore`. Quello che l'aiutante Node previene è un'altra cosa — la chiave visibile nel browser dell'app pubblicata. Capire *quale* problema sto risolvendo evita di scegliere una soluzione giusta per il motivo sbagliato.
 
