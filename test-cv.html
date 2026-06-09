@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test generazione CV (anello 4 — 📄 CV-1 base)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1000px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+    h1 { font-size: 1.4rem; }
+    .due { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .due > div { flex: 1; min-width: 320px; }
+    textarea { width: 100%; height: 360px; font-family: ui-monospace, monospace; font-size: 0.8rem; box-sizing: border-box; }
+    button { margin-top: 1rem; padding: 0.6rem 1.2rem; font-size: 1rem; cursor: pointer; }
+    button:disabled { opacity: 0.5; cursor: wait; }
+    .cv { margin-top: 1rem; padding: 1.2rem; background: #f4f6f8; border-radius: 8px; }
+    .cv h2 { margin: 0 0 0.3rem; font-size: 1.3rem; }
+    .cv .sommario { font-style: italic; margin: 0.5rem 0 1rem; }
+    .cv h3 { font-size: 1rem; margin: 1rem 0 0.3rem; border-bottom: 1px solid #ccd; padding-bottom: 0.2rem; }
+    .cv .voce { margin: 0.4rem 0; }
+    .cv .voce .capo { font-weight: 600; }
+    .cv .voce .meta { color: #555; font-size: 0.9rem; }
+    .cv ul { margin: 0.3rem 0; padding-left: 1.2rem; }
+    pre.grezzo { margin-top: 1rem; padding: 1rem; background: #1e1e1e; color: #d4d4d4; border-radius: 8px; overflow: auto; font-size: 0.8rem; }
+    .errore { color: #cf222e; margin-top: 1rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Test generazione CV (anello 4 — 📄 CV-1 base)</h1>
+  <p>Un input: il <strong>profilo</strong> (output anello 1), JSON già strutturato. Il server genera il 📄 CV-1 (<code>cv_base</code>) e lo restituisce in JSON. A sinistra il CV reso leggibile; il JSON grezzo sotto serve per il <strong>controllo anti-invenzione</strong> (ogni voce deve venire dal profilo).</p>
+
+  <div class="due">
+    <div>
+      <label><strong>Profilo (JSON)</strong></label>
+      <textarea id="profilo"></textarea>
+    </div>
+    <div>
+      <label><strong>CV generato</strong></label>
+      <div id="risultato"></div>
+    </div>
+  </div>
+
+  <button id="vai">Genera CV</button>
+
+  <script>
+    // Esempio precaricato (cameriere) per provare subito.
+    const ESEMPIO_PROFILO = {
+      nome: "Luca Rossi",
+      esperienze_formali: [
+        { ruolo: "cameriere", azienda: "Bar Centrale", durata: "1 anno", cosa_facevo: "servizio ai tavoli e gestione della cassa" }
+      ],
+      esperienze_informali: [
+        { cosa_facevo: "aiutavo in cucina alle feste di paese", quando: "estati 2019-2021", con_chi: "pro loco" }
+      ],
+      competenze: ["uso della cassa", "lavoro in team", "servizio ai tavoli"],
+      formazione: [
+        { titolo: "Diploma alberghiero", istituto: "IPSSAR", anno: "2018" }
+      ]
+    };
+
+    const elProfilo = document.getElementById("profilo");
+    const elRisultato = document.getElementById("risultato");
+    const btn = document.getElementById("vai");
+
+    elProfilo.value = JSON.stringify(ESEMPIO_PROFILO, null, 2);
+
+    btn.addEventListener("click", async () => {
+      elRisultato.innerHTML = "";
+      let profilo;
+      try {
+        profilo = JSON.parse(elProfilo.value);
+      } catch {
+        mostraErrore("Il JSON del profilo non è valido.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Sto generando…";
+      try {
+        const res = await fetch("http://localhost:3000/genera-cv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profilo })
+        });
+        const testo = await res.text();
+        if (!res.ok) {
+          mostraErrore("Errore dal server:\n" + testo);
+          return;
+        }
+        let cv;
+        try {
+          cv = JSON.parse(stripRecinto(testo));
+        } catch {
+          mostraErrore("La risposta dell'AI non è un JSON valido:\n" + testo);
+          return;
+        }
+        mostraCv(cv);
+      } catch (err) {
+        mostraErrore("Impossibile contattare il server (è avviato su localhost:3000?).\n" + err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Genera CV";
+      }
+    });
+
+    // Toglie l'eventuale recinto ```json ... ``` (il prompt lo vieta, ma per sicurezza).
+    function stripRecinto(t) {
+      return t.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+    }
+
+    function mostraErrore(msg) {
+      elRisultato.innerHTML = '<div class="errore"></div>';
+      elRisultato.querySelector(".errore").textContent = msg;
+    }
+
+    function mostraCv(cv) {
+      let html = '<div class="cv">';
+      html += "<h2>" + escapeHtml(cv?.intestazione?.nome) + "</h2>";
+      if (cv?.sommario) html += '<div class="sommario">' + escapeHtml(cv.sommario) + "</div>";
+
+      if ((cv?.esperienze_professionali || []).length) {
+        html += "<h3>Esperienze professionali</h3>";
+        for (const e of cv.esperienze_professionali) {
+          html += '<div class="voce">';
+          html += '<div class="capo">' + escapeHtml(e.ruolo) + (e.azienda ? " · " + escapeHtml(e.azienda) : "") + "</div>";
+          if (e.durata) html += '<div class="meta">' + escapeHtml(e.durata) + "</div>";
+          if (e.descrizione) html += "<div>" + escapeHtml(e.descrizione) + "</div>";
+          html += "</div>";
+        }
+      }
+
+      if ((cv?.altre_esperienze || []).length) {
+        html += "<h3>Altre esperienze</h3>";
+        for (const e of cv.altre_esperienze) {
+          html += '<div class="voce">';
+          html += "<div>" + escapeHtml(e.descrizione) + "</div>";
+          if (e.quando) html += '<div class="meta">' + escapeHtml(e.quando) + "</div>";
+          html += "</div>";
+        }
+      }
+
+      if ((cv?.competenze || []).length) {
+        html += "<h3>Competenze</h3><ul>";
+        for (const c of cv.competenze) html += "<li>" + escapeHtml(c) + "</li>";
+        html += "</ul>";
+      }
+
+      if ((cv?.formazione || []).length) {
+        html += "<h3>Formazione</h3>";
+        for (const f of cv.formazione) {
+          html += '<div class="voce">';
+          html += '<div class="capo">' + escapeHtml(f.titolo) + "</div>";
+          html += '<div class="meta">' + [f.istituto, f.anno].filter(Boolean).map(escapeHtml).join(" · ") + "</div>";
+          html += "</div>";
+        }
+      }
+      html += "</div>";
+
+      html += '<pre class="grezzo">' + escapeHtml(JSON.stringify(cv, null, 2)) + "</pre>";
+      elRisultato.innerHTML = html;
+    }
+
+    function escapeHtml(x) {
+      return String(x ?? "").replace(/[&<>"]/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    }
+  </script>
+</body>
+</html>
