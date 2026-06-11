@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test generazione CV (anello 4 — 🎯 CV-2 mirato)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1000px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+    h1 { font-size: 1.4rem; }
+    .due { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .due > div { flex: 1; min-width: 320px; }
+    textarea { width: 100%; height: 320px; font-family: ui-monospace, monospace; font-size: 0.8rem; box-sizing: border-box; }
+    button { margin-top: 1rem; padding: 0.6rem 1.2rem; font-size: 1rem; cursor: pointer; }
+    button:disabled { opacity: 0.5; cursor: wait; }
+    .match { margin-top: 1rem; padding: 0.8rem 1.2rem; background: #eef6ee; border-radius: 8px; font-size: 0.9rem; }
+    .match .stelle { font-size: 1.1rem; font-weight: 600; }
+    .match ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+    .cv { margin-top: 1rem; padding: 1.2rem; background: #f4f6f8; border-radius: 8px; }
+    .cv h2 { margin: 0 0 0.3rem; font-size: 1.3rem; }
+    .cv .sommario { font-style: italic; margin: 0.5rem 0 1rem; }
+    .cv h3 { font-size: 1rem; margin: 1rem 0 0.3rem; border-bottom: 1px solid #ccd; padding-bottom: 0.2rem; }
+    .cv .voce { margin: 0.4rem 0; }
+    .cv .voce .capo { font-weight: 600; }
+    .cv .voce .meta { color: #555; font-size: 0.9rem; }
+    .cv ul { margin: 0.3rem 0; padding-left: 1.2rem; }
+    pre.grezzo { margin-top: 1rem; padding: 1rem; background: #1e1e1e; color: #d4d4d4; border-radius: 8px; overflow: auto; font-size: 0.8rem; }
+    .errore { color: #cf222e; margin-top: 1rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Test generazione CV (anello 4 — 🎯 CV-2 mirato)</h1>
+  <p>Due input: il <strong>profilo</strong> (anello 1) e l'<strong>annuncio</strong> (anello 2), JSON già strutturati. La pagina esegue prima l'<strong>anello 3</strong> (<code>/confronta</code>) per ricavare i <code>giudizi</code>, poi l'<strong>anello 4</strong> (<code>/genera-cv</code> con profilo+annuncio+giudizi) e mostra il 🎯 CV-2 (<code>cv_mirato</code>). Il JSON grezzo sotto serve per il <strong>controllo anti-invenzione</strong> (ogni voce deve venire dal profilo; la mira sta solo nell'enfasi del sommario).</p>
+
+  <div class="due">
+    <div>
+      <label><strong>Profilo (JSON)</strong></label>
+      <textarea id="profilo"></textarea>
+    </div>
+    <div>
+      <label><strong>Annuncio (JSON)</strong></label>
+      <textarea id="annuncio"></textarea>
+    </div>
+  </div>
+
+  <button id="vai">Genera CV mirato</button>
+
+  <div id="risultato"></div>
+
+  <script>
+    // Esempi precaricati (commessa ↔ addetta vendite) per provare subito.
+    const ESEMPIO_PROFILO = {
+      nome: "Giulia Bianchi",
+      esperienze_formali: [
+        { ruolo: "Commessa", azienda: "Supermercato Conad", durata: "2 anni (2021-2023)", cosa_facevo: "Rifornimento scaffali, assistenza ai clienti e gestione della cassa" },
+        { ruolo: "Cameriera", azienda: "Trattoria Da Luigi", durata: "estate 2020", cosa_facevo: "" }
+      ],
+      esperienze_informali: [
+        { cosa_facevo: "Davo ripetizioni di matematica a ragazzi delle medie", quando: "2019-2021", con_chi: "figli di amici e vicini" }
+      ],
+      competenze: ["Uso del registratore di cassa", "Lavoro in squadra", "Pazienza con i clienti"],
+      formazione: [
+        { titolo: "Diploma di ragioneria", istituto: "ITC Pacioli", anno: "2019" }
+      ]
+    };
+
+    const ESEMPIO_ANNUNCIO = {
+      competenze_richieste: [
+        { testo: "uso del registratore di cassa", priorita: "richiesto" },
+        { testo: "conoscenza inglese base", priorita: "preferenziale" }
+      ],
+      esperienza_richiesta: [
+        { testo: "esperienza nella vendita al dettaglio", priorita: "richiesto", anni: 1 }
+      ],
+      formazione_richiesta: [
+        { testo: "diploma di scuola superiore", priorita: "preferenziale" }
+      ],
+      altri_requisiti: [
+        { testo: "disponibilità a lavorare nei weekend", priorita: "richiesto" }
+      ],
+      titolo: "Addetta alle vendite",
+      sede: ["Bologna"],
+      contratto: { tipo: "tempo determinato", durata: "6 mesi", orario: "part-time", retribuzione: "" },
+      mansioni: ["Assistenza clienti", "Gestione cassa", "Rifornimento scaffali"],
+      benefit: []
+    };
+
+    const elProfilo = document.getElementById("profilo");
+    const elAnnuncio = document.getElementById("annuncio");
+    const elRisultato = document.getElementById("risultato");
+    const btn = document.getElementById("vai");
+
+    elProfilo.value = JSON.stringify(ESEMPIO_PROFILO, null, 2);
+    elAnnuncio.value = JSON.stringify(ESEMPIO_ANNUNCIO, null, 2);
+
+    btn.addEventListener("click", async () => {
+      elRisultato.innerHTML = "";
+      let profilo, annuncio;
+      try {
+        profilo = JSON.parse(elProfilo.value);
+      } catch {
+        mostraErrore("Il JSON del profilo non è valido.");
+        return;
+      }
+      try {
+        annuncio = JSON.parse(elAnnuncio.value);
+      } catch {
+        mostraErrore("Il JSON dell'annuncio non è valido.");
+        return;
+      }
+
+      btn.disabled = true;
+      try {
+        // Anello 3 — confronto, per ricavare i giudizi (segnale di mira).
+        btn.textContent = "Anello 3: confronto…";
+        const resConf = await fetch("http://localhost:3000/confronta", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profilo, annuncio })
+        });
+        const testoConf = await resConf.text();
+        if (!resConf.ok) {
+          mostraErrore("Errore dall'anello 3 (/confronta):\n" + testoConf);
+          return;
+        }
+        const confronto = JSON.parse(testoConf);
+        const giudizi = confronto.giudizi || [];
+
+        // Anello 4 — generazione del CV mirato dai tre ingressi.
+        btn.textContent = "Anello 4: genero il CV…";
+        const resCv = await fetch("http://localhost:3000/genera-cv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profilo, annuncio, giudizi })
+        });
+        const testoCv = await resCv.text();
+        if (!resCv.ok) {
+          mostraErrore("Errore dall'anello 4 (/genera-cv):\n" + testoCv);
+          return;
+        }
+        let cv;
+        try {
+          cv = JSON.parse(stripRecinto(testoCv));
+        } catch {
+          mostraErrore("La risposta dell'AI non è un JSON valido:\n" + testoCv);
+          return;
+        }
+        mostra(confronto, cv);
+      } catch (err) {
+        mostraErrore("Impossibile contattare il server (è avviato su localhost:3000?).\n" + err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Genera CV mirato";
+      }
+    });
+
+    // Toglie l'eventuale recinto ```json ... ``` (il prompt lo vieta, ma per sicurezza).
+    function stripRecinto(t) {
+      return t.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+    }
+
+    function mostraErrore(msg) {
+      elRisultato.innerHTML = '<div class="errore"></div>';
+      elRisultato.querySelector(".errore").textContent = msg;
+    }
+
+    // Mostra il match (anello 3, segnale di mira) e poi il CV mirato.
+    function mostra(confronto, cv) {
+      let html = '<div class="match">';
+      const stelle = confronto.stelle;
+      if (stelle !== undefined) html += '<div class="stelle">Match: ' + escapeHtml(stelle) + " ★ (segnale di mira, anello 3)</div>";
+      html += "<ul>";
+      for (const g of (confronto.giudizi || [])) {
+        const peso = g.priorita || g.importanza || "";
+        html += "<li>[" + escapeHtml(g.esito) + "] " + (peso ? "(" + escapeHtml(peso) + ") " : "") + escapeHtml(g.requisito) + "</li>";
+      }
+      html += "</ul></div>";
+
+      html += '<div class="cv">';
+      html += "<h2>" + escapeHtml(cv?.intestazione?.nome) + "</h2>";
+      if (cv?.sommario) html += '<div class="sommario">' + escapeHtml(cv.sommario) + "</div>";
+
+      if ((cv?.esperienze_professionali || []).length) {
+        html += "<h3>Esperienze professionali</h3>";
+        for (const e of cv.esperienze_professionali) {
+          html += '<div class="voce">';
+          html += '<div class="capo">' + escapeHtml(e.ruolo) + (e.azienda ? " · " + escapeHtml(e.azienda) : "") + "</div>";
+          if (e.durata) html += '<div class="meta">' + escapeHtml(e.durata) + "</div>";
+          if (e.descrizione) html += "<div>" + escapeHtml(e.descrizione) + "</div>";
+          html += "</div>";
+        }
+      }
+
+      if ((cv?.altre_esperienze || []).length) {
+        html += "<h3>Altre esperienze</h3>";
+        for (const e of cv.altre_esperienze) {
+          html += '<div class="voce">';
+          html += "<div>" + escapeHtml(e.descrizione) + "</div>";
+          if (e.quando) html += '<div class="meta">' + escapeHtml(e.quando) + "</div>";
+          html += "</div>";
+        }
+      }
+
+      if ((cv?.competenze || []).length) {
+        html += "<h3>Competenze</h3><ul>";
+        for (const c of cv.competenze) html += "<li>" + escapeHtml(c) + "</li>";
+        html += "</ul>";
+      }
+
+      if ((cv?.formazione || []).length) {
+        html += "<h3>Formazione</h3>";
+        for (const f of cv.formazione) {
+          html += '<div class="voce">';
+          html += '<div class="capo">' + escapeHtml(f.titolo) + "</div>";
+          html += '<div class="meta">' + [f.istituto, f.anno].filter(Boolean).map(escapeHtml).join(" · ") + "</div>";
+          html += "</div>";
+        }
+      }
+      html += "</div>";
+
+      html += '<pre class="grezzo">' + escapeHtml(JSON.stringify(cv, null, 2)) + "</pre>";
+      elRisultato.innerHTML = html;
+    }
+
+    function escapeHtml(x) {
+      return String(x ?? "").replace(/[&<>"]/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    }
+  </script>
+</body>
+</html>

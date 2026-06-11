@@ -59,11 +59,20 @@ Le idee nuove si annotano con **data e motivo**. Aggiornato con "aggiorna-tutto"
   *(Diario Step 1.10-1.11-1.15.)*
 
 ## Generazione (anello 4)
-- **Testo visibile per le esperienze informali** nel CV: come presentarle senza
-  "promuoverle" a formali. *(prompt_design.md, note schema profilo — da affrontare nel
-  design dell'anello 4.)*
+- ✅ **Testo visibile per le esperienze informali** nel CV (come presentarle senza
+  "promuoverle" a formali): **realizzato** nell'anello 4 — sezione `altre_esperienze`
+  (`descrizione` che fonde `cosa_facevo`+`con_chi`, più `quando`; mai `ruolo`/`azienda`)
+  con la regola anti-promozione, validata in 📄 CV-1 e 🎯 CV-2.
+  *(prompt_design.md, schema CV e regole d'uso; diario Step 1.20.)*
 - **Riordino dinamico delle sezioni nel CV mirato**: nell'MVP l'ordine delle sezioni è
   **fisso** in entrambi i CV (base e mirato) e il "mirare" avviene nel **contenuto**
   (sommario, dettaglio delle voci); far variare ordine/enfasi delle sezioni in base al
   confronto (anello 3) è rimandato. *(2026-06-09 — deciso nel design dell'anello 4:
   ordine fisso per semplicità e verificabilità.)*
+- **Omissione mirata di contenuti off-target nel 🎯 CV-2**: nell'MVP il CV-2 **tiene tutte
+  le voci** del profilo e mira solo con l'**enfasi** (cosa il sommario mette in risalto,
+  quanto dettaglio dà a una descrizione), a ordine fisso. Poter **omettere** le voci non
+  pertinenti all'annuncio renderebbe il CV più incisivo (come i CV mirati veri), ma
+  l'omissione è già una *scelta* che complica la verifica 1:1 e apre una porta
+  all'anti-invenzione "per sottrazione". Rimandato. *(2026-06-11 — deciso nel design del
+  CV-2, bivio 3: tenere tutto, ri-pesare l'enfasi.)*

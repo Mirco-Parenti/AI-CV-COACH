@@ -786,3 +786,27 @@ Niente di tecnicamente difficile — un parametro e due costanti. Il punto vero 
 - Il limite del **preambolo** va in `idee_future`, non sistemato ora: con input ben formati non si presenta, e non voglio allargare lo scope prima di disegnare il 🎯 CV-2.
 
 💡 *Mia intuizione / scelta ragionata* — La lezione vera di questo Step non è tecnica ma di **metodo**: ho seguito i dati anche quando contraddicevano la mia diagnosi iniziale, e l'intervento ne è uscito migliore — non un rattoppo di "coerenza" presunta, ma una garanzia di "robustezza" reale, motivata bene.
+
+### Step 1.22 — Il 🎯 CV-2 mirato: la mira nell'enfasi, mai nell'invenzione
+
+*Chiuso il 📄 CV-1, ho aperto il secondo CV: quello che punta a un annuncio. Qui il rischio anti-invenzione è al massimo, perché "mirare" tenta di stiracchiare i fatti per farli combaciare. Ho ragionato a lungo il design prima di scrivere una riga, poi ho costruito e testato — e il test ha ripagato subito.*
+
+**Cosa ho fatto**
+- Ragionato e fissato il **design del 🎯 CV-2** sciogliendo tre bivi: **ingressi** = `profilo` (fatti) + `annuncio` (bersaglio) + `giudizi` dell'anello 3 (segnale di mira), **niente CV-1**; la **mira vive nell'enfasi** (soprattutto nel sommario), non nel riordino; i contenuti off-target si **tengono tutti**, ri-pesati (l'omissione è andata in `idee_future`).
+- Sciolto un nodo concettuale: la parola "fonte" nascondeva **due cose** — la **fonte dei fatti** (solo il profilo) e la **fonte della mira** (annuncio + anello 3). Annuncio e giudizi *non* aggiungono nulla al CV: dicono solo *dove puntare i riflettori*.
+- Deciso di **non passare il 📄 CV-1** in ingresso: il suo unico ruolo previsto era lo stile, ma lo stile è già nel prompt; darlo in pasto avrebbe solo aggiunto rischio di contaminazione dei fatti. (Rivede la nota dello Step 1.20.)
+- Scritto il **prompt del 🎯 CV-2** (`cv_mirato`), identico in `prompt_design.md` e `server.js` (sync char-by-char), e **cablato `/genera-cv`** perché smisti da solo: col solo profilo → 📄 CV-1, con profilo+annuncio+giudizi → 🎯 CV-2 (con 400 se mancano i pezzi del mirato).
+- Aggiunto **`test-cv-mirato.html`** come pagina **separata** (su richiesta): due input, esegue anello 3 poi anello 4, mostra match + CV.
+
+**Cosa ho imparato**
+- La distinzione **fatti / mira** è ciò che rende il CV mirato difendibile: la mira sposta solo l'enfasi su fatti veri, e il guard-rail più importante è che il CV **taccia sui gap** invece di inventare "competenze trasferibili" per coprirli.
+- **Test prima, valutazione dopo, ancora una volta ripagato.** Il primo giro ha scovato **due bug nel prompt**: chiamavo l'esito `"parziale"` invece di `"in parte"` (vocabolario reale dei giudizi) e mi appoggiavo a `importanza`, che è **vuota proprio sui requisiti del nucleo** — il peso lì lo dà `priorita`. Senza il test sul campo sarebbero passati inosservati.
+
+**Dove ho faticato / cosa non era ovvio**
+- Guardare *dentro* i `giudizi` invece di assumerne la forma: solo ispezionando l'output reale dell'anello 3 ho visto che `priorita` e `importanza` valgono per gruppi di voci diversi (nucleo vs contesto). Una struttura che credevo uniforme non lo era.
+
+**Cosa ho deciso e perché**
+- **Un solo endpoint** `/genera-cv` che smista per ingressi, invece di due rotte separate: la "generazione" è un anello solo, e un endpoint in più sarebbe altra impalcatura da migrare a VB.NET.
+- **Due pagine di test distinte** (`test-cv.html` e `test-cv-mirato.html`) invece di una sola con un interruttore: tengono separati i due percorsi (base e mirato) e si leggono più chiare.
+
+💡 *Mia intuizione / scelta ragionata* — Il 🎯 CV-2 ha confermato sul campo l'intuizione dello Step 1.20: tutto il valore (e tutto il rischio) si concentra nel **sommario**. Lì si è vista la mira funzionare — apre con i requisiti `richiesto`+`soddisfatto`, retrocede il resto — *senza* nominare né compensare ciò che mancava. La mira giusta non è dire di più: è scegliere cosa dire per primo, tra le cose vere.
