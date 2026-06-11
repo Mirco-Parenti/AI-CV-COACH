@@ -762,3 +762,27 @@ Niente di tecnicamente difficile — un parametro e due costanti. Il punto vero 
 - **Ordine delle sezioni fisso** nell'MVP: il "mirare" vive nel **contenuto** (cosa il sommario mette in risalto, quanto dettaglio do a un'esperienza), non nel riordino.
 
 💡 *Mia intuizione / scelta ragionata* — Il valore dell'anello 4 sta quasi tutto in **due campi di prosa**: `sommario` e `descrizione`. Tutto il resto del CV è verità ricopiata dal profilo. Sapere *dove* si concentra il rischio mi dice anche dove concentrare l'attenzione quando scriverò i prompt.
+
+### Step 1.21 — Il 📄 CV-1 alla prova del campo, e una convenzione: il server garantisce JSON pulito
+
+*Avevo cablato il 📄 CV-1 ma non l'avevo ancora provato sul serio. Questo Step è prima di tutto una verifica sul campo (test prima, valutazione dopo), e poi un piccolo intervento di robustezza nato da un dubbio che credevo fosse un'incoerenza — e che i dati hanno corretto a metà strada.*
+
+**Cosa ho fatto**
+- Fatto girare il 📄 CV-1 su **due profili reali** scelti per stressare i punti deboli: uno **medio** (esperienze formali + informali + competenze + formazione) e uno **scarno** (quasi vuoto). Doppio controllo campo per campo contro il profilo.
+- Verificato l'**anti-invenzione**: i campi-fatto (nome, ruolo, azienda, durata, competenze, formazione) ricopiati 1:1, e la **trappola del `cosa_facevo` vuoto** → la `descrizione` è rimasta vuota, niente invenzione. Sul profilo scarno il sommario è rimasto breve, senza gonfiare.
+- Introdotto una **convenzione unica — "il server garantisce JSON pulito"**: un helper `inviaJsonModello` su `/struttura` e `/genera-cv` che **valida lato server** (riusa `estraiJson`), ri-serializza pulito se il JSON è valido e risponde **502 col grezzo** se il modello tronca o malforma. Prima i due endpoint restituivano il testo del modello *verbatim* e si affidavano al client per togliere il recinto ` ```json `.
+- Annotato in `idee_future.md` un **limite latente condiviso**: `estraiJson` toglie il recinto ma non un eventuale **preambolo in prosa** prima del JSON.
+
+**Cosa ho imparato**
+- La distinzione **campi-fatto / campi-prosa** rende l'anti-invenzione *verificabile a colpo d'occhio*: ho controllato i fatti 1:1 e ho concentrato l'attenzione sui soli due campi-prosa. Sul campo ha tenuto.
+- **Onestà coi dati, anche contro me stesso**: ero partito convinto che ci fosse un'incoerenza tra gli endpoint (credevo che `/struttura` pulisse il JSON lato server). I fatti mi hanno smentito — `/struttura` e `/genera-cv` erano *entrambi* verbatim; solo `/confronta` parsa lato server, e per necessità (deve calcolare il punteggio). Così ho cambiato la **motivazione** dell'intervento da "coerenza" (falsa) a "robustezza" (vera).
+
+**Dove ho faticato / cosa non era ovvio**
+- Separare **coerenza** da **robustezza**: l'intervento non sanava un'incoerenza (non c'era), ma aggiungeva una garanzia utile soprattutto su `/genera-cv`, l'endpoint con output grande e quindi più esposto al troncamento. Ho dovuto correggere il tiro a metà.
+- Un **502 su `/confronta`** durante i test mi ha fatto temere una regressione. Diagnosi prima di concludere: era il modello che aggiungeva un *preambolo in prosa* su un mio annuncio **fuori-schema** di test — comportamento pre-esistente, non una mia regressione (quell'handler non l'ho toccato).
+
+**Cosa ho deciso e perché**
+- Convenzione **su entrambi** gli endpoint di generazione, non solo su `/genera-cv`: pulirne uno solo l'avrebbe reso il diverso del gruppo. `/confronta` resta com'è perché già parsa per i suoi calcoli.
+- Il limite del **preambolo** va in `idee_future`, non sistemato ora: con input ben formati non si presenta, e non voglio allargare lo scope prima di disegnare il 🎯 CV-2.
+
+💡 *Mia intuizione / scelta ragionata* — La lezione vera di questo Step non è tecnica ma di **metodo**: ho seguito i dati anche quando contraddicevano la mia diagnosi iniziale, e l'intervento ne è uscito migliore — non un rattoppo di "coerenza" presunta, ma una garanzia di "robustezza" reale, motivata bene.
