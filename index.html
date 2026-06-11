@@ -54,6 +54,10 @@
       .scheda h4 { margin: 0 0 0.3rem; font-size: 0.95rem; }
       .scheda ul { margin: 0.2rem 0; padding-left: 1.1rem; }
       .vuoto { color: #888; font-style: italic; }
+      /* Documenti generati (anello 4): CV e lettera, resi dentro le schede. */
+      .scheda .sommario { font-style: italic; margin: 0.2rem 0 0.4rem; }
+      .scheda .blocco { white-space: pre-wrap; margin: 0.3rem 0; }
+      .scheda .firma { font-weight: 600; margin-top: 0.4rem; }
 
       /* Area di interazione: ospita o la casella di testo o i bottoni. */
       #azione { margin-top: 0.9rem; }
@@ -104,7 +108,8 @@
       //  - blocco     (competenze): lista di stringhe, con un giro di aggiunta.
       // ====================================================================
 
-      const ENDPOINT = "http://localhost:3000/struttura";
+      const BASE = "http://localhost:3000";
+      const ENDPOINT = BASE + "/struttura";
 
       // --- Stato: il profilo, unica fonte di verità (ricalca lo schema). ---
       const profilo = {
@@ -114,6 +119,13 @@
         competenze: [],
         formazione: [],
       };
+
+      // --- Stato della fase di generazione (anelli 2-4), riempito dopo il
+      //     profilo: l'annuncio strutturato, i giudizi del confronto e il CV
+      //     mirato (riferimento di coerenza per la lettera). ---
+      let annuncio = null;
+      let giudizi = [];
+      let cvMirato = null;
 
       // --- Riferimenti UI ---
       const chat = document.getElementById("chat");
@@ -271,6 +283,36 @@
           const fr = await strutturaTurno(chiave, risposta);
           inAttesa.remove();
           return fr;
+        } catch (err) {
+          inAttesa.textContent =
+            "Ho avuto un problema a contattare il server (è avviato su localhost:3000?). Riprova.";
+          inAttesa.classList.add("errore");
+          return null;
+        }
+      }
+
+      // POST generico verso un endpoint del server (anelli 2-4); ritorna
+      // l'oggetto JSON (il server lo restituisce già pulito, estraiFrammento
+      // resta come difesa in più).
+      async function postServer(path, payload) {
+        const res = await fetch(BASE + path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const testo = await res.text();
+        if (!res.ok) throw new Error(testo);
+        return estraiFrammento(testo);
+      }
+
+      // Come chiamaConAttesa ma per un endpoint qualsiasi; mostra un messaggio
+      // di attesa e ritorna l'oggetto (o null se c'è stato un errore).
+      async function postConAttesa(path, payload, msg) {
+        const inAttesa = aiDice(msg || "Un attimo…");
+        try {
+          const obj = await postServer(path, payload);
+          inAttesa.remove();
+          return obj;
         } catch (err) {
           inAttesa.textContent =
             "Ho avuto un problema a contattare il server (è avviato su localhost:3000?). Riprova.";
@@ -566,11 +608,14 @@
 
         aiDice(
           "Userò soltanto queste informazioni — niente di inventato — per aiutarti a " +
-            "preparare CV e lettere su misura quando avrai un annuncio che ti interessa."
+            "preparare CV e lettera su misura."
         );
 
         // Comodo in fase di sviluppo: il profilo completo in console.
         console.log("Profilo raccolto:", profilo);
+
+        // Si passa alla fase di generazione (anelli 2-3-4).
+        avviaFaseGenerazione();
       }
 
       // Riepiloga una sezione a voci-oggetto (una scheda per voce).
@@ -588,6 +633,213 @@
           }));
           schedaCampi(titolo + " " + (i + 1), righe);
         });
+      }
+
+      // --- Fase di generazione (anelli 2-3-4) ------------------------------
+      // Dopo il profilo: o il CV base (solo profilo), o il percorso mirato a
+      // un annuncio (analisi annuncio → confronto → CV mirato → lettera).
+
+      function avviaFaseGenerazione() {
+        aiDice(
+          "Ora possiamo preparare un CV. Puoi partire dal CV base (dal solo " +
+            "profilo) oppure mirare a un annuncio: in quel caso confronto il " +
+            "tuo profilo con l'annuncio e preparo un CV mirato e una lettera."
+        );
+        offriScelteGenerazione();
+      }
+
+      // Le due strade dopo il profilo. Dopo aver fatto il CV base, resta
+      // disponibile solo la strada dell'annuncio.
+      function offriScelteGenerazione({ baseGiaFatto = false } = {}) {
+        const scelte = [];
+        if (!baseGiaFatto) {
+          scelte.push({ etichetta: "📄 CV base ora", primario: true, onClick: generaCvBase });
+        }
+        scelte.push({
+          etichetta: "🎯 Miro a un annuncio",
+          primario: baseGiaFatto,
+          onClick: chiediAnnuncio,
+        });
+        chiediScelta(scelte);
+      }
+
+      // 📄 CV base — dal solo profilo (anello 4, cv_base).
+      async function generaCvBase() {
+        const cv = await postConAttesa("/genera-cv", { profilo }, "Preparo il CV base…");
+        if (!cv) return offriScelteGenerazione();
+        aiDice("Ecco il tuo CV base:");
+        mostraCv(cv);
+        aiDice("Vuoi anche mirare a un annuncio specifico?");
+        offriScelteGenerazione({ baseGiaFatto: true });
+      }
+
+      // 🎯 Anello 2 — incolla l'annuncio e strutturalo.
+      function chiediAnnuncio() {
+        aiDice("Incolla qui il testo dell'annuncio di lavoro che ti interessa.");
+        chiediTesto("Incolla l'annuncio…", async (testo) => {
+          utenteDice(testo);
+          const ann = await postConAttesa(
+            "/struttura",
+            { turno: "analisi_annuncio", risposta: testo },
+            "Sto leggendo l'annuncio…"
+          );
+          if (!ann) return chiediAnnuncio();
+          annuncio = ann;
+          const ruolo = ann.titolo ? ' per la posizione di "' + ann.titolo + '"' : "";
+          aiDice("Ho letto l'annuncio" + ruolo + ". Confronto il tuo profilo con i requisiti.");
+          eseguiConfronto();
+        });
+      }
+
+      // Anello 3 — confronto profilo↔annuncio e match.
+      async function eseguiConfronto() {
+        const conf = await postConAttesa(
+          "/confronta",
+          { profilo, annuncio },
+          "Confronto profilo e annuncio…"
+        );
+        if (!conf) {
+          chiediScelta([{ etichetta: "Riprova confronto", primario: true, onClick: eseguiConfronto }]);
+          return;
+        }
+        giudizi = conf.giudizi || [];
+        mostraMatch(conf);
+        aiDice("Da qui preparo il CV mirato e la lettera, su misura per questo annuncio.");
+        chiediScelta([{ etichetta: "🎯 Genera CV mirato", primario: true, onClick: generaCvMirato }]);
+      }
+
+      // Anello 4 — CV mirato (cv_mirato), poi offre la lettera.
+      async function generaCvMirato() {
+        const cv = await postConAttesa(
+          "/genera-cv",
+          { profilo, annuncio, giudizi },
+          "Preparo il CV mirato…"
+        );
+        if (!cv) {
+          chiediScelta([{ etichetta: "Riprova CV mirato", primario: true, onClick: generaCvMirato }]);
+          return;
+        }
+        cvMirato = cv;
+        aiDice("Ecco il tuo CV mirato su questo annuncio:");
+        mostraCv(cv);
+        aiDice("Vuoi anche la lettera di presentazione, coerente con questo CV?");
+        chiediScelta([
+          { etichetta: "✉️ Genera lettera", primario: true, onClick: generaLettera },
+          {
+            etichetta: "No, va bene così",
+            onClick: () => aiDice("Perfetto. Se vuoi puoi rigenerare quando preferisci."),
+          },
+        ]);
+      }
+
+      // Anello 4 — lettera di presentazione (lettera_mirata).
+      async function generaLettera() {
+        const lettera = await postConAttesa(
+          "/genera-lettera",
+          { profilo, annuncio, giudizi, cv: cvMirato },
+          "Scrivo la lettera…"
+        );
+        if (!lettera) {
+          chiediScelta([{ etichetta: "Riprova lettera", primario: true, onClick: generaLettera }]);
+          return;
+        }
+        aiDice("Ecco la tua lettera di presentazione:");
+        mostraLettera(lettera);
+        aiDice("Abbiamo completato il CV mirato e la lettera per questo annuncio.");
+      }
+
+      // --- Rendering dei documenti generati --------------------------------
+
+      // Mostra un CV (base o mirato) come una serie di schede, nello stile del
+      // riepilogo del profilo. I campi vuoti si omettono.
+      function mostraCv(cv) {
+        const testa = document.createElement("div");
+        testa.className = "scheda";
+        const h = document.createElement("h4");
+        h.textContent = (cv.intestazione && cv.intestazione.nome) || "CV";
+        testa.appendChild(h);
+        if (cv.sommario) {
+          const s = document.createElement("div");
+          s.className = "sommario";
+          s.textContent = cv.sommario;
+          testa.appendChild(s);
+        }
+        appendiInChat(testa);
+
+        const righe = (coppie) =>
+          coppie.filter((c) => (c.valore || "").trim()).map((c) => ({ etichetta: c.etichetta, valore: c.valore }));
+
+        if ((cv.esperienze_professionali || []).length) {
+          aiDice("Esperienze professionali");
+          for (const e of cv.esperienze_professionali) {
+            schedaCampi(null, righe([
+              { etichetta: "Ruolo", valore: e.ruolo },
+              { etichetta: "Azienda", valore: e.azienda },
+              { etichetta: "Durata", valore: e.durata },
+              { etichetta: "Descrizione", valore: e.descrizione },
+            ]));
+          }
+        }
+        if ((cv.altre_esperienze || []).length) {
+          aiDice("Altre esperienze");
+          for (const e of cv.altre_esperienze) {
+            schedaCampi(null, righe([
+              { etichetta: "Descrizione", valore: e.descrizione },
+              { etichetta: "Quando", valore: e.quando },
+            ]));
+          }
+        }
+        if ((cv.competenze || []).length) {
+          schedaLista("Competenze", cv.competenze);
+        }
+        if ((cv.formazione || []).length) {
+          aiDice("Formazione");
+          for (const f of cv.formazione) {
+            schedaCampi(null, righe([
+              { etichetta: "Titolo", valore: f.titolo },
+              { etichetta: "Istituto", valore: f.istituto },
+              { etichetta: "Anno", valore: f.anno },
+            ]));
+          }
+        }
+      }
+
+      // Mostra il match dell'anello 3: stelle + giudizio per ogni requisito.
+      function mostraMatch(conf) {
+        const stelle = conf.stelle != null ? conf.stelle : "?";
+        aiDice("Ho confrontato profilo e annuncio. Match: " + stelle + " su 5 stelle.");
+        // Il sentinel "Nessuna esperienza richiesta" non è un requisito da
+        // soddisfare: è già escluso dal punteggio e per l'utente è solo rumore,
+        // quindi non lo mostriamo (vale anche se il modello lo allucina su una
+        // lista esperienza_richiesta vuota).
+        const righe = (conf.giudizi || [])
+          .filter((g) => (g.requisito || "").trim().toLowerCase() !== "nessuna esperienza richiesta")
+          .map((g) => {
+            const peso = g.priorita || g.importanza || "";
+            return "[" + (g.esito || "") + "] " + (peso ? "(" + peso + ") " : "") + g.requisito;
+          });
+        schedaLista("Requisiti dell'annuncio", righe.length ? righe : ["(nessun requisito)"]);
+      }
+
+      // Mostra la lettera come blocchi di testo dentro una scheda.
+      function mostraLettera(lettera) {
+        const div = document.createElement("div");
+        div.className = "scheda";
+        for (const blocco of ["apertura", "corpo", "chiusura"]) {
+          if (lettera[blocco]) {
+            const p = document.createElement("div");
+            p.className = "blocco";
+            p.textContent = lettera[blocco];
+            div.appendChild(p);
+          }
+        }
+        if (lettera.firma) {
+          const f = document.createElement("div");
+          f.className = "firma";
+          f.textContent = lettera.firma;
+          div.appendChild(f);
+        }
+        appendiInChat(div);
       }
 
       // --- Avvio -----------------------------------------------------------

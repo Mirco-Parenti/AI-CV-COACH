@@ -587,7 +587,7 @@ Sono già estratti: fidati di ciò che contengono, non re-interpretare testo gre
 Giudichi due gruppi:
 - Il nucleo — le quattro liste di requisiti. È ciò che conta di più.
 - Il contesto — titolo, sede, contratto, mansioni, benefit. Conta meno (un quinto del nucleo), ma va giudicato anch'esso.
-Dai un giudizio per OGNI voce delle quattro liste di requisiti, e un giudizio per OGNI campo di contesto presente (valutato nel suo insieme). Non saltarne nessuno; non aggiungerne di inventati.
+Dai un giudizio per OGNI voce delle quattro liste di requisiti, e un giudizio per OGNI campo di contesto presente (valutato nel suo insieme). Non saltarne nessuno; non aggiungerne di inventati. Una lista di requisiti vuota non produce giudizi: non inventare voci-segnaposto per riempirla. In particolare la voce "Nessuna esperienza richiesta" si giudica SOLO se è davvero presente in esperienza_richiesta; se quella lista è vuota, non la creare.
 
 # 3 — COME GIUDICARE
 Confronta ogni voce contro il PROFILO INTERO, non solo contro la sezione omonima: una competenza richiesta può essere soddisfatta da un'esperienza dichiarata, e viceversa.

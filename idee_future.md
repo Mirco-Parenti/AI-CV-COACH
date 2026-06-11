@@ -10,9 +10,10 @@ voce dice **cos'è · perché è futura · dove se ne parla** (puntatore a diari
 Le idee nuove si annotano con **data e motivo**. Aggiornato con "aggiorna-tutto".
 
 ## Front-end & pipeline
-- **Integrazione front-end**: oggi `index.html` fa solo l'anello 1; gli anelli 2 e 3
-  vivono solo nelle `test-*.html`. Unirli in un unico flusso utente reale
-  (dialogo → incolla annuncio → match in stelle). *(Backlog handoff.)*
+- ✅ **Integrazione front-end**: **realizzata** — i quattro anelli sono ora un unico flusso
+  in `index.html` (dialogo profilo → bivio 📄 CV-1 / annuncio → confronto in stelle →
+  🎯 CV-2 → ✉️ lettera). Le `test-*.html` restano come banchi di prova per-anello.
+  *(diario Step 1.24.)*
 - **Estrazione JSON robusta al preambolo**: `estraiJson` (lato server, usato da tutti gli
   endpoint) toglie il **recinto** ```` ```json ```` ma non un eventuale **preambolo in
   prosa** prima del JSON; in quel caso `JSON.parse` fallisce e l'endpoint risponde 502.

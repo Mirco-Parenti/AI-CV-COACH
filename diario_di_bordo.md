@@ -835,3 +835,27 @@ Niente di tecnicamente difficile — un parametro e due costanti. Il punto vero 
 - **Pagina di test separata** `test-lettera.html`, coerente con la scelta di tenere distinti i percorsi di prova.
 
 💡 *Mia intuizione / scelta ragionata* — La lettera è la prova che l'anti-invenzione non è un freno alla persuasione: si può **proporre con convinzione** restando veri. Il trucco non è inventare entusiasmo su fatti finti, ma mettere calore vero attorno a fatti reali. Con questo si chiude tutta la generazione dell'anello 4: 📄 CV-1, 🎯 CV-2 e ✉️ lettera.
+
+### Step 1.24 — Il flusso unico: tutti gli anelli in un solo dialogo, e una voce-fantasma del confronto
+
+*Il momento in cui i pezzi smettono di essere pezzi. Fino a ieri l'anello 1 viveva in `index.html` e gli anelli 2-3-4 solo nelle `test-*.html`: bancali di prova separati. Qui li ho cuciti in un unico flusso utente reale — e proprio collaudandolo dal vivo, cliccando come farebbe un utente, è saltata fuori una piccola invenzione che gli endpoint da soli non mostravano.*
+
+**Cosa ho fatto**
+- Integrato i **quattro anelli in un solo flusso** dentro `index.html`: dialogo del profilo → bivio (📄 CV-1 base / 🎯 miro a un annuncio) → analisi annuncio → confronto in stelle → 🎯 CV-2 mirato → ✉️ lettera. Il server resta senza stato; la memoria del profilo e il flusso del dialogo vivono nel browser.
+- **Collaudato end-to-end nel browser**, non solo via endpoint: ho fatto pilotare il flusso cliccando i bottoni, con un profilo di prova e un annuncio costruito apposta per chiedere cose **assenti** dal profilo (inglese, disponibilità weekend), per stressare l'anti-invenzione.
+- Trovato e corretto una **voce-fantasma nel confronto**: con `esperienza_richiesta` vuota, l'anello 3 ogni tanto allucinava il sentinel "Nessuna esperienza richiesta". Corretto su **due livelli** (cintura e bretelle): prompt di confronto rinforzato (lista vuota → nessun giudizio, niente segnaposto; sync char-by-char `prompt_design.md`↔`server.js`) + filtro difensivo in `mostraMatch` (il sentinel non si mostra mai all'utente).
+
+**Cosa ho imparato**
+- **"Pezzi che passano da soli" ≠ "flusso che funziona".** Gli endpoint erano già verdi via curl; la voce-fantasma l'ho vista solo guidando i click. I difetti stanno nelle giunture, non nei singoli mattoni.
+- Il sentinel "Nessuna esperienza richiesta" è **legittimo solo quando è l'annuncio a dichiarare l'assenza** di esperienza; quando la lista è semplicemente vuota, ricrearlo è invenzione. La differenza tra *"dichiarato assente"* e *"non presente"*.
+- L'anti-invenzione **tiene a valle**: nel collaudo né il 🎯 CV-2 né la ✉️ lettera hanno millantato inglese o disponibilità weekend.
+
+**Dove ho faticato / cosa non era ovvio**
+- Capire che la voce-fantasma è **intermittente** (un'allucinazione dell'LLM), non un difetto deterministico: due chiamate identiche al confronto davano esiti diversi. È questa l'incertezza che mi ha spinto al doppio livello.
+- **Isolare dove nasceva**: l'analisi annuncio era sana (`esperienza_richiesta` vuota, "rapporto con il pubblico" giustamente fra le competenze); era il confronto a inventare. L'ho capito solo guardando il JSON reale dei due anelli, non a logica.
+
+**Cosa ho deciso e perché**
+- **Correzione a due livelli.** Il **prompt** (asset durevole, migra a VB.NET) per togliere la causa a monte; il **filtro in `index.html`** (impalcatura) come rete deterministica, perché un LLM non garantisce mai il 100% e il sentinel, per l'utente, è comunque rumore già escluso dal punteggio.
+- **Flusso unico nel solo `index.html`**, lasciando le `test-*.html` come banchi di prova per-anello: l'integrazione non sostituisce i test isolati, li affianca.
+
+💡 *Mia intuizione / scelta ragionata* — L'MVP è completo **end-to-end**: i quattro anelli sono un solo dialogo nel browser. La lezione che mi porto: la verifica vera non è "gli endpoint rispondono", è "l'utente clicca e arriva in fondo". Il difetto che contava è emerso solo lì, alla giuntura — e si è risolto meglio mettendo una cintura sull'asset durevole *e* le bretelle sull'impalcatura.
