@@ -77,3 +77,9 @@ Le idee nuove si annotano con **data e motivo**. Aggiornato con "aggiorna-tutto"
   l'omissione è già una *scelta* che complica la verifica 1:1 e apre una porta
   all'anti-invenzione "per sottrazione". Rimandato. *(2026-06-11 — deciso nel design del
   CV-2, bivio 3: tenere tutto, ri-pesare l'enfasi.)*
+- **Soglia di match prima di generare**: per un match molto basso (es. ~0 stelle) il
+  🎯 CV-2 e la ✉️ lettera escono *onesti ma inutili come candidatura* — la lettera diventa
+  una "non-candidatura" che dichiara solo ciò che manca. Idea: sotto una soglia, **avvisare
+  l'utente** (o sconsigliare la generazione) invece di produrre comunque, lasciando comunque
+  a lui la scelta finale. *(2026-06-11 — emerso nel primo collaudo con il CV reale di Mirco
+  contro un annuncio lontanissimo, Operatore Subacqueo, match 0,1 stelle; diario Step 1.25.)*

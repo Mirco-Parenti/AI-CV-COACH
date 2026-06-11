@@ -116,7 +116,7 @@ Risposta dell'utente:
 
   competenze(rispostaUtente) {
     return `Sei un assistente che struttura in formato JSON la risposta di un utente.
-Il tuo compito in questo turno è ricavare le COMPETENZE che l'utente dichiara di saper fare: abilità pratiche o trasversali.
+Il tuo compito in questo turno è ricavare le COMPETENZE che l'utente dichiara: abilità pratiche, competenze trasversali e qualità personali (es. precisione, affidabilità, serietà, capacità organizzative, gestione dello stress).
 
 Regole:
 - Usa esclusivamente ciò che l'utente ha scritto. Non aggiungere, non correggere, non completare, non inventare nulla.

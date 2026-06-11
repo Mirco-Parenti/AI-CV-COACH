@@ -297,7 +297,7 @@ Prompt inviato all'AI per ricavare le voci di `competenze` dalla risposta dell'u
 
 ```
 Sei un assistente che struttura in formato JSON la risposta di un utente.
-Il tuo compito in questo turno è ricavare le COMPETENZE che l'utente dichiara di saper fare: abilità pratiche o trasversali.
+Il tuo compito in questo turno è ricavare le COMPETENZE che l'utente dichiara: abilità pratiche, competenze trasversali e qualità personali (es. precisione, affidabilità, serietà, capacità organizzative, gestione dello stress).
 
 Regole:
 - Usa esclusivamente ciò che l'utente ha scritto. Non aggiungere, non correggere, non completare, non inventare nulla.
@@ -316,6 +316,7 @@ Risposta dell'utente:
 
 **Note specifiche del turno competenze (logica di prompt):**
 
+- **Perimetro ampio del campo**: fra le competenze rientrano non solo le abilità pratiche e trasversali (ciò che si "sa fare"), ma anche le **qualità personali** dichiarate dall'utente (es. serietà, affidabilità, capacità organizzative, gestione dello stress). Una prima versione del prompt diceva solo "di saper fare" e l'LLM scartava i tratti caratteriali, leggendoli come "modi di essere" e non come competenze: il perimetro è ora esplicitato nella riga d'apertura.
 - **Ancoraggio leggero**: la domanda riporta l'utente alle esperienze già raccontate, ma è l'utente a dichiarare le competenze. L'AI non propone competenze a partire dalle esperienze (sarebbe invenzione). L'ancoraggio forte resta possibile evoluzione futura, non MVP.
 - **Raccolta in blocco**, non una alla volta: a differenza dei turni-esperienza (oggetti ricchi, una voce per turno), le competenze sono stringhe semplici e si raccolgono tutte insieme. L'AI separa le competenze elencate in voci distinte della lista, restando aderente alle parole dell'utente (separa sì, gonfia no). Nessun separatore imposto all'utente.
 - **Conferma anti-dimenticanza a un giro**: dopo la scheda, l'AI chiede esplicitamente se aggiungere o eliminare. Se l'utente aggiunge, l'AI ri-mostra la lista aggiornata e chiude (non riapre un secondo giro). Se conferma, si procede.

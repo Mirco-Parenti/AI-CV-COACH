@@ -859,3 +859,25 @@ Niente di tecnicamente difficile — un parametro e due costanti. Il punto vero 
 - **Flusso unico nel solo `index.html`**, lasciando le `test-*.html` come banchi di prova per-anello: l'integrazione non sostituisce i test isolati, li affianca.
 
 💡 *Mia intuizione / scelta ragionata* — L'MVP è completo **end-to-end**: i quattro anelli sono un solo dialogo nel browser. La lezione che mi porto: la verifica vera non è "gli endpoint rispondono", è "l'utente clicca e arriva in fondo". Il difetto che contava è emerso solo lì, alla giuntura — e si è risolto meglio mettendo una cintura sull'asset durevole *e* le bretelle sull'impalcatura.
+
+### Step 1.25 — Il primo collaudo con un CV vero: un bug nelle competenze e l'anti-invenzione al caso estremo
+
+*Fino a ieri avevo provato la pipeline con profili inventati per l'occasione. Qui ho fatto la cosa più ovvia e più rivelatrice: le ho dato in pasto il mio CV reale. L'ho usato come fonte per compilare tutti i turni dell'anello 1 — uno per turno, rispondendo in linguaggio naturale come farei davvero — e ho percorso l'intera catena fino ai tre output. Bastava usare dati veri per far saltare fuori ciò che i dati finti nascondevano.*
+
+**Cosa ho fatto**
+- Ho compilato i cinque turni del profilo (nome, esperienze formali e informali, competenze, formazione) a partire dal mio CV, poi ho generato i tre output dell'anello 4: 📄 CV-1, 🎯 CV-2 e ✉️ lettera.
+- Come annuncio-bersaglio per il CV-2 e la lettera ho scelto **di proposito** una posizione lontanissima dal mio profilo — **Operatore Tecnico Subacqueo** in un'azienda di acquacoltura — per stressare l'anti-invenzione proprio dove sarebbe stato più "comodo" gonfiare.
+
+**Cosa ho imparato**
+- Il match è uscito **0,1 stelle (2/100)**: corretto, i due profili sono incompatibili. E i tre output non hanno inventato nulla: il 🎯 CV-2 e la ✉️ lettera **dichiarano apertamente** l'assenza di brevetti, certificazioni ed esperienza in mare. L'anti-invenzione regge anche al caso estremo, quello in cui non c'è niente da spendere.
+- L'anello 3 ha usato bene il "non determinabile" per i dati che il mio profilo non raccoglie (patente nautica, sede): non li ha dati né per presenti né per assenti.
+
+**Dove ho faticato / cosa non era ovvio**
+- Il turno **competenze scartava le qualità personali**: serietà, affidabilità, capacità organizzative, gestione dello stress sparivano. Le leggeva come "modi di essere", non come competenze. La causa era una sola formula nel prompt di estrazione — *"di saper fare"* — che restringeva il campo all'abilità operativa e tagliava fuori i tratti caratteriali.
+
+**Cosa ho deciso e perché**
+- Ho **allargato il perimetro** del campo competenze nel prompt di estrazione: ora include esplicitamente abilità pratiche, competenze trasversali **e** qualità personali, con esempi. Correzione **identica** in `server.js` e `prompt_design.md` (sync char-by-char) e **riverificata** sullo stesso input: le qualità ora entrano (da 23 a 31 voci).
+- Ho lasciato com'è il **testo visibile** del dialogo ("cosa ti senti di saper fare? Anche cose pratiche e concrete…"): è copy UX, già abbastanza inclusivo (l'esempio mostra "Essere ordinato"). La rifinitura fine dei testi visibili la rimando alle fasi successive.
+- Ho **annotato un'idea** in `idee_future.md`: sotto una soglia di match, avvisare prima di generare CV-2 e lettera — per un match ~0 gli output sono onesti ma inutili come candidatura.
+
+💡 *Mia intuizione / scelta ragionata* — La verifica vera non è "passa coi dati di prova", è "passa col mio CV". Una sola formula nel prompt — *"saper fare"* — tagliava fuori metà di ciò che sono come persona, e l'ho vista solo perché ho usato dati reali. I bug più veri non li trovi nei casi che costruisci apposta: li trovi quando metti dentro te stesso.
