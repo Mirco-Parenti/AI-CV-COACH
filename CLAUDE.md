@@ -63,6 +63,12 @@ Convenzione di scrittura: **"io" = Mirco, "tu" = tu, l'assistente.**
   in `README.md` ("Vincolo etico principale") ed è codificato nei prompt di
   `prompt_design.md` — **rispettalo quando progetti/modifichi i prompt**. È una regola
   **del prodotto**, non una mia regola di lavoro.
+- **Anti-perdita (puntatore)**: il gemello simmetrico dell'anti-invenzione — nulla di ciò
+  che l'utente dichiara va **perso** se detto nel turno sbagliato (campo `altrove`:
+  instradamento ad altri turni, conferma dell'utente, e per l'irriducibile un esplicito
+  "lasciato fuori", mai una perdita silenziosa). Descritto in `prompt_design.md`
+  ("Convenzione anti-perdita: il campo `altrove`") e narrato nel `diario_di_bordo.md`
+  (Step 1.26). Anche questa è una regola **del prodotto**.
 - **Idee/raffinamenti futuri (puntatore)**: il backlog ragionato per le fasi successive
   è in `idee_future.md`.
 
